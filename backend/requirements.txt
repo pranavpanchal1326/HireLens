@@ -34,3 +34,7 @@ faiss-cpu==1.9.0.post1   # CPU variant (never faiss-gpu) for free-tier hosting.
 # Phase 6.2 — Trained ML re-ranker.
 xgboost==2.0.3           # Gradient boosting model library.
 
+# Phase 7.1 — FastAPI API endpoints and multipart support.
+python-multipart==0.0.19
+
+

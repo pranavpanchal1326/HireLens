@@ -10,11 +10,14 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.api.v1.endpoints.parse import router as parse_router
+
 api_router = APIRouter()
+
+api_router.include_router(parse_router, tags=["parsing"])
 
 # Aggregate router for all v1 API endpoints.
 # Future endpoints will be attached here:
-#   - api_router.include_router(parse_router, prefix="/parse", tags=["parsing"]) (Phase 7.2)
 #   - api_router.include_router(score_router, prefix="/score", tags=["scoring"]) (Phase 7.3)
 #   - api_router.include_router(rank_router, prefix="/rank", tags=["ranking"]) (Phase 7.4)
 #   - api_router.include_router(feedback_router, prefix="/feedback", tags=["feedback"]) (Phase 7.5)
