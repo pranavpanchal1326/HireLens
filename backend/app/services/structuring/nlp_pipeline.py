@@ -28,6 +28,10 @@ from app.schemas.parsing import (
     ParsedResume,
     ParsingWarningCode,
 )
+from app.services.confidence.parsing_confidence import (
+    calculate_jd_parsing_confidence,
+    calculate_resume_parsing_confidence,
+)
 
 # Load the small English model ONCE at import time. Reloading a spaCy model per
 # request is a common, costly mistake (hundreds of ms each) — the model is
@@ -508,17 +512,20 @@ def structure_resume(extraction_result: ExtractionResult) -> ParsedResume:
     total_years = TotalExperienceCalculator().calculate_total_years(experience)
     contact_present = _detect_contact_info_present(raw_text)
 
-    return ParsedResume(
+    resume = ParsedResume(
         raw_text=raw_text,
         skills=skills,
         experience=experience,
         education=education,
         total_years_experience=total_years,
         contact_info_present=contact_present,
-        parsing_confidence=0.0,  # Placeholder — Phase 1.3 owns the real score.
+        parsing_confidence=0.0,  # Overwritten below with the real 1.3 score.
         parsing_warnings=[w.value for w in dict.fromkeys(warnings)],
         pipeline_version=PARSER_PIPELINE_VERSION,
     )
+    # Phase 1.3: compute the real confidence from completeness of the object above.
+    confidence = calculate_resume_parsing_confidence(extraction_result, resume)
+    return resume.model_copy(update={"parsing_confidence": confidence})
 
 
 def structure_job_description(
@@ -527,7 +534,7 @@ def structure_job_description(
     """Top-level entry point: raw extraction → populated ParsedJobDescription."""
     raw_text = extraction_result.raw_text
     structured = JobDescriptionStructurer().structure(raw_text)
-    return ParsedJobDescription(
+    jd = ParsedJobDescription(
         raw_text=raw_text,
         required_skills=structured["required_skills"],  # type: ignore[arg-type]
         preferred_skills=structured["preferred_skills"],  # type: ignore[arg-type]
@@ -537,6 +544,8 @@ def structure_job_description(
         required_education_level=structured[  # type: ignore[arg-type]
             "required_education_level"
         ],
-        parsing_confidence=0.0,  # Placeholder — Phase 1.3 owns the real score.
+        parsing_confidence=0.0,  # Overwritten below with the real 1.3 score.
         pipeline_version=PARSER_PIPELINE_VERSION,
     )
+    confidence = calculate_jd_parsing_confidence(extraction_result, jd)
+    return jd.model_copy(update={"parsing_confidence": confidence})
