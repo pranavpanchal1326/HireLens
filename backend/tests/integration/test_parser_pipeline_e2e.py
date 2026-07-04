@@ -169,14 +169,21 @@ def _run_pipeline(
 
 def test_clean_resume_high_confidence() -> None:
     r = _run_pipeline(CLEAN_RESUME)
-    # All major fields extract; only title/company pairing is imperfect (known
-    # limitation), so we expect high-but-not-necessarily-perfect confidence.
     assert 0.85 <= r.parsing_confidence <= 1.0
     assert confidence_to_band(r.parsing_confidence).value == "high"
     assert {"Python", "SQL", "Docker"} <= set(r.skills)
     assert len(r.experience) >= 2
     assert r.contact_info_present is True
     assert ParsingWarningCode.EMPTY_DOCUMENT.value not in r.parsing_warnings
+    # Regression guard (Phase 1.4 fix): title/company are correctly separated and
+    # NOT swapped or concatenated.
+    first = r.experience[0]
+    assert first.title == "Senior Software Engineer"
+    assert first.company == "Acme Corporation"
+    # Regression guard: education is one clean entry, not fragmented ORG noise.
+    assert len(r.education) == 1
+    assert r.education[0].degree == "Bachelor's"
+    assert r.education[0].graduation_year == 2015
 
 
 def test_column_bleed_still_usable() -> None:
@@ -228,6 +235,9 @@ def test_career_switcher_extracts_structure_but_misses_transferable_skills() -> 
     # "team leadership" / "scheduling" / "management" are not surfaced as skills.
     assert "Leadership" not in r.skills
     assert "Project Management" not in r.skills
+    # Regression guard (Phase 1.4 fix): title/company separated correctly.
+    assert r.experience[0].title == "Restaurant Manager"
+    assert r.experience[0].company == "The Corner Bistro"
 
 
 def test_sparse_resume_low_but_nonzero_confidence() -> None:
@@ -303,3 +313,30 @@ def test_pipeline_is_deterministic_across_runs() -> None:
         r = _run_pipeline(CLEAN_RESUME)
         dumps.append(r.model_dump(exclude={"document_id"}))
     assert dumps[0] == dumps[1] == dumps[2]
+
+
+def test_as_of_pins_present_role_for_cross_day_reproducibility() -> None:
+    """Phase 1.4 fix (FOUND ISSUE 3): pinning as_of makes 'Present' roles
+    reproducible across days, and different as_of dates yield different totals.
+    """
+    from datetime import date
+
+    extraction = ExtractionResult(
+        raw_text=CLEAN_RESUME,
+        extraction_method_used="plain_text",
+        warnings=[],
+        is_processable=True,
+        page_count=1,
+    )
+    r_2020 = structure_resume(extraction, as_of=date(2020, 1, 1))
+    r_2020_again = structure_resume(extraction, as_of=date(2020, 1, 1))
+    r_2025 = structure_resume(extraction, as_of=date(2025, 1, 1))
+
+    # Same pinned date → identical total (reproducible regardless of wall clock).
+    assert r_2020.total_years_experience == r_2020_again.total_years_experience
+    # Later pinned date → more experience for the open-ended "Present" role.
+    assert (
+        r_2025.total_years_experience is not None
+        and r_2020.total_years_experience is not None
+    )
+    assert r_2025.total_years_experience > r_2020.total_years_experience

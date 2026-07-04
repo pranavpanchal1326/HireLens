@@ -52,6 +52,30 @@ DEGREE_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
     ("Associate's", ("associate", "a.a", "a.s")),
 ]
 
+# --- Title/company classification (Phase 1.4 fix) -----------------------------
+# Deterministic signals so title/company assignment is order-independent and does
+# not depend on spaCy mislabeling a job title as an ORG. spaCy ORG is only a last
+# resort when the suffix heuristic finds no company.
+_COMPANY_SUFFIX_RE = re.compile(
+    r"\b(inc|llc|ltd|co|corp|corporation|company|technologies|technology|"
+    r"solutions|systems|group|labs|holdings|partners|associates|university|"
+    r"college|institute|bank|ventures|studio|studios|agency|consulting|gmbh|"
+    r"plc|sarl|bv|ag)\b\.?",
+    re.IGNORECASE,
+)
+_TITLE_KEYWORD_RE = re.compile(
+    r"\b(engineer|developer|manager|analyst|designer|director|consultant|"
+    r"supervisor|lead|scientist|architect|administrator|coordinator|specialist|"
+    r"intern|officer|president|associate|accountant|nurse|teacher|professor|"
+    r"technician|programmer|strategist|recruiter|representative|assistant|"
+    r"executive|founder|owner|head|chief|vp|cto|ceo|cfo)\b",
+    re.IGNORECASE,
+)
+# Split a header line into candidate parts. Only splits on strong separators
+# (comma, pipe, en/em dash with spaces, hyphen with spaces, " at ") so hyphenated
+# words like "Full-Stack" stay intact.
+_HEADER_SPLIT_RE = re.compile(r"\s*[,|]\s*|\s+[–—]\s+|\s+-\s+|\s+at\s+", re.IGNORECASE)
+
 # --- Section header patterns (curated, extensible) ----------------------------
 # Maps a canonical section name to the header phrases that introduce it.
 SECTION_HEADER_PATTERNS: dict[str, tuple[str, ...]] = {
@@ -231,8 +255,13 @@ class ExperienceExtractor:
     def __init__(self) -> None:
         self.warnings: list[ParsingWarningCode] = []
 
-    def extract_experience(self, section_text: str) -> list[ExperienceEntry]:
+    def extract_experience(
+        self, section_text: str, as_of: date | None = None
+    ) -> list[ExperienceEntry]:
+        """Extract experience entries. ``as_of`` pins "Present" to a fixed date for
+        reproducibility (defaults to today)."""
         self.warnings = []
+        reference = as_of or date.today()
         entries: list[ExperienceEntry] = []
         if not section_text.strip():
             return entries
@@ -244,7 +273,7 @@ class ExperienceExtractor:
                 if self._looks_like_job_block(block):
                     self.warnings.append(ParsingWarningCode.EXPERIENCE_DATES_AMBIGUOUS)
                 continue
-            entry = self._build_entry(block, range_match)
+            entry = self._build_entry(block, range_match, reference)
             if entry is not None:
                 entries.append(entry)
         return entries
@@ -258,7 +287,7 @@ class ExperienceExtractor:
         return any(ent.label_ == "ORG" for ent in doc.ents)
 
     def _build_entry(
-        self, block: str, range_match: re.Match[str]
+        self, block: str, range_match: re.Match[str], as_of: date
     ) -> ExperienceEntry | None:
         start_parsed = _parse_date_token(range_match.group(1))
         if start_parsed is None:
@@ -271,11 +300,11 @@ class ExperienceExtractor:
         end_raw = range_match.group(2).lower()
         if end_raw in ("present", "current", "now"):
             end_iso: str | None = None
-            end_dt = date.today()
+            end_dt = as_of
         else:
             end_parsed = _parse_date_token(range_match.group(2))
             if end_parsed is None:
-                end_iso, end_dt = None, date.today()
+                end_iso, end_dt = None, as_of
             else:
                 end_iso = _iso_partial(*end_parsed)
                 end_dt = _to_date(*end_parsed)
@@ -295,18 +324,50 @@ class ExperienceExtractor:
     def _extract_title_company(
         self, block: str, range_match: re.Match[str]
     ) -> tuple[str | None, str | None]:
-        """Best-effort title/company. Leaves a field None when not confident."""
-        header_line = next((ln for ln in block.splitlines() if ln.strip()), "")
-        doc = _NLP(header_line)
-        orgs = [ent.text.strip() for ent in doc.ents if ent.label_ == "ORG"]
-        company = orgs[0] if orgs else None
+        """Deterministic, order-independent title/company split.
 
-        # Title candidate: header line minus the date range and the company.
-        remainder = header_line[: range_match.start()] if range_match else header_line
-        if company:
-            remainder = remainder.replace(company, "")
-        remainder = re.sub(r"[|,\-–—]+", " ", remainder).strip()
-        title = remainder if re.search(r"[A-Za-z]{3,}", remainder) else None
+        Classifies each header part by strong signals (company suffix like "Inc"
+        / "Corporation"; role keyword like "Engineer" / "Manager") rather than
+        trusting spaCy's ORG tag, which frequently mislabels a job title as an
+        organization. spaCy ORG is used only as a last-resort company fallback.
+        Leaves a field None when not confident (honesty over guessing).
+        """
+        header_line = next((ln for ln in block.splitlines() if ln.strip()), "")
+        # Remove any inline date range so it can't pollute the parts.
+        header_no_date = _DATE_RANGE_RE.sub("", header_line).strip()
+        parts = [
+            p.strip()
+            for p in _HEADER_SPLIT_RE.split(header_no_date)
+            if p.strip() and re.search(r"[A-Za-z]{2,}", p)
+        ]
+        if not parts:
+            return None, None
+
+        company = next((p for p in parts if _COMPANY_SUFFIX_RE.search(p)), None)
+        title = next(
+            (p for p in parts if p != company and _TITLE_KEYWORD_RE.search(p)), None
+        )
+
+        # If a title keyword was found but no suffix-company, the remaining part
+        # (if any) is the company candidate.
+        if company is None and title is not None:
+            leftovers = [p for p in parts if p != title]
+            company = leftovers[0] if leftovers else None
+        # If a company was found but no title keyword, the remaining part is the
+        # title candidate.
+        if title is None and company is not None:
+            leftovers = [p for p in parts if p != company]
+            title = leftovers[0] if leftovers else None
+        # Last resort for company: spaCy ORG, but never equal to the chosen title.
+        if company is None:
+            doc = _NLP(header_no_date)
+            orgs = [
+                ent.text.strip()
+                for ent in doc.ents
+                if ent.label_ == "ORG" and ent.text.strip() != title
+            ]
+            company = orgs[0] if orgs else None
+
         return title, company
 
 
@@ -316,22 +377,30 @@ class EducationExtractor:
     def __init__(self) -> None:
         self.warnings: list[ParsingWarningCode] = []
 
-    def extract_education(self, section_text: str) -> list[EducationEntry]:
+    def extract_education(
+        self, section_text: str, as_of: date | None = None
+    ) -> list[EducationEntry]:
         self.warnings = []
         entries: list[EducationEntry] = []
         if not section_text.strip():
             return entries
 
-        current_year = date.today().year
-        for block in re.split(r"\n\s*\n|\n", section_text.strip()):
+        current_year = (as_of or date.today()).year
+        # Split on BLANK lines only so a degree, its institution, and its year
+        # (typically on adjacent lines) stay in one block instead of fragmenting.
+        for block in re.split(r"\n\s*\n", section_text.strip()):
             block = block.strip()
             if not block:
                 continue
             degree = self._detect_degree(block)
+            # Require a degree keyword to create an entry. Institution-only or
+            # year-only blocks are almost always noise from a mistagged ORG (a
+            # skill/company) in the header-less fallback path — dropping them
+            # kills the false positives found in Phase 1.4 testing.
+            if degree is None:
+                continue
             year = self._detect_grad_year(block, current_year)
             institution = self._detect_institution(block)
-            if degree is None and year is None and institution is None:
-                continue
             entries.append(
                 EducationEntry(
                     degree=degree,
@@ -366,7 +435,7 @@ class TotalExperienceCalculator:
     """Sums experience years across entries WITHOUT double-counting overlaps."""
 
     def calculate_total_years(
-        self, experience_entries: list[ExperienceEntry]
+        self, experience_entries: list[ExperienceEntry], as_of: date | None = None
     ) -> float | None:
         """Merge overlapping date intervals before summing.
 
@@ -374,13 +443,17 @@ class TotalExperienceCalculator:
         concurrent roles — e.g. two overlapping 2018-2020 jobs would report 4
         years of experience for a 2-year span. We merge intervals first, then sum
         the merged spans, so overlapping months are counted once.
+
+        ``as_of`` pins open-ended ("Present") roles to a fixed date for
+        reproducibility (defaults to today).
         """
+        reference = as_of or date.today()
         intervals: list[tuple[date, date]] = []
         for entry in experience_entries:
             start = self._parse_iso(entry.start_date)
             if start is None:
                 continue  # Can't place an interval without a start.
-            end = self._parse_iso(entry.end_date) or date.today()
+            end = self._parse_iso(entry.end_date) or reference
             if end < start:
                 continue
             intervals.append((start, end))
@@ -477,12 +550,16 @@ def _section_or_full(sections: dict[str, str], name: str, full_text: str) -> str
     return value if value else full_text
 
 
-def structure_resume(extraction_result: ExtractionResult) -> ParsedResume:
+def structure_resume(
+    extraction_result: ExtractionResult, as_of: date | None = None
+) -> ParsedResume:
     """Top-level entry point: raw extraction → populated ParsedResume.
 
-    parsing_confidence is a placeholder (0.0) here; Phase 1.3 computes the real
-    value by aggregating extraction (1.1) and structuring (1.2) signals.
+    ``as_of`` pins date math ("Present" roles, year bounds) to a fixed reference
+    for reproducible evaluation (Phase 5); defaults to today for normal use.
+    parsing_confidence is computed here via the Phase 1.3 calculators.
     """
+    reference = as_of or date.today()
     raw_text = extraction_result.raw_text
     warnings: list[ParsingWarningCode] = list(extraction_result.warnings)
 
@@ -500,16 +577,18 @@ def structure_resume(extraction_result: ExtractionResult) -> ParsedResume:
         warnings.append(ParsingWarningCode.NO_EXPERIENCE_SECTION_FOUND)
         exp_text = raw_text
     exp_ex = ExperienceExtractor()
-    experience = exp_ex.extract_experience(exp_text)
+    experience = exp_ex.extract_experience(exp_text, as_of=reference)
     warnings.extend(exp_ex.warnings)
 
     edu_ex = EducationExtractor()
     education = edu_ex.extract_education(
-        _section_or_full(sections, "education", raw_text)
+        _section_or_full(sections, "education", raw_text), as_of=reference
     )
     warnings.extend(edu_ex.warnings)
 
-    total_years = TotalExperienceCalculator().calculate_total_years(experience)
+    total_years = TotalExperienceCalculator().calculate_total_years(
+        experience, as_of=reference
+    )
     contact_present = _detect_contact_info_present(raw_text)
 
     resume = ParsedResume(
