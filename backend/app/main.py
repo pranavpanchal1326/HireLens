@@ -40,12 +40,23 @@ def register_error_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ):
+        # Sanitize errors to ensure they are JSON serializable (Pydantic v2 includes raw Exception objects in ctx)
+        details = []
+        for error in exc.errors():
+            sanitized = dict(error)
+            if "ctx" in sanitized:
+                ctx = dict(sanitized["ctx"])
+                if "error" in ctx:
+                    ctx["error"] = str(ctx["error"])
+                sanitized["ctx"] = ctx
+            details.append(sanitized)
+
         return JSONResponse(
             status_code=422,
             content={
                 "code": "VALIDATION_ERROR",
                 "message": "Input validation failed.",
-                "details": exc.errors(),
+                "details": details,
                 "request_id": request.headers.get("x-request-id"),
             },
         )

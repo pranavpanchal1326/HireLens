@@ -10,15 +10,19 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.api.v1.endpoints.feedback import router as feedback_router
 from app.api.v1.endpoints.parse import router as parse_router
+from app.api.v1.endpoints.rank import router as rank_router
+from app.api.v1.endpoints.score import router as score_router
 
 api_router = APIRouter()
 
 api_router.include_router(parse_router, tags=["parsing"])
+api_router.include_router(score_router, tags=["scoring"])
+api_router.include_router(rank_router, tags=["ranking"])
+api_router.include_router(feedback_router, prefix="/feedback", tags=["feedback"])
 
 # Aggregate router for all v1 API endpoints.
 # Future endpoints will be attached here:
-#   - api_router.include_router(score_router, prefix="/score", tags=["scoring"]) (Phase 7.3)
-#   - api_router.include_router(rank_router, prefix="/rank", tags=["ranking"]) (Phase 7.4)
-#   - api_router.include_router(feedback_router, prefix="/feedback", tags=["feedback"]) (Phase 7.5)
 #   - api_router.include_router(metrics_router, prefix="/metrics", tags=["metrics"]) (Phase 7.6)
+
