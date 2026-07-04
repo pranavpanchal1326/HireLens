@@ -30,3 +30,7 @@ torch==2.12.1            # Backend for sentence-transformers. Install the CPU-on
 
 # Phase 3.2 — FAISS vector store for skill taxonomy search.
 faiss-cpu==1.9.0.post1   # CPU variant (never faiss-gpu) for free-tier hosting.
+
+# Phase 6.2 — Trained ML re-ranker.
+xgboost==2.0.3           # Gradient boosting model library.
+
