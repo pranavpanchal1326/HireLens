@@ -20,8 +20,21 @@ from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from app.schemas.parsing import ParsedJobDescription, ParsedResume
 from app.services.scoring.corpus_builder import load_corpus
+
+# Re-exported from the shared module (Phase 2.2 refactor) so existing imports
+# `from ...tfidf_scorer import prepare_resume_text_for_scoring` keep working while
+# TF-IDF and embedding scorers share ONE text-assembly implementation.
+from app.services.scoring.text_preparation import (
+    prepare_jd_text_for_scoring,
+    prepare_resume_text_for_scoring,
+)
+
+__all__ = [
+    "TFIDFScorer",
+    "prepare_resume_text_for_scoring",
+    "prepare_jd_text_for_scoring",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -108,32 +121,3 @@ class TFIDFScorer:
         similarity = float(cosine_similarity(resume_vec, jd_vec)[0][0])
         clipped = min(1.0, max(0.0, similarity))
         return round(clipped, _SCORE_PRECISION)
-
-
-def prepare_resume_text_for_scoring(parsed_resume: ParsedResume) -> str:
-    """Assemble the resume fields most relevant to lexical fit into one blob.
-
-    Included (and why): skills (the primary lexical signal), experience entry
-    descriptions (role responsibilities/technologies in prose), and education
-    degree + field_of_study (domain signal). Raw contact info is intentionally
-    excluded (PII, and no scoring value).
-    """
-    parts: list[str] = []
-    parts.extend(parsed_resume.skills)
-    parts.extend(entry.description for entry in parsed_resume.experience)
-    for edu in parsed_resume.education:
-        if edu.degree:
-            parts.append(edu.degree)
-        if edu.field_of_study:
-            parts.append(edu.field_of_study)
-    return " ".join(p for p in parts if p).strip()
-
-
-def prepare_jd_text_for_scoring(parsed_jd: ParsedJobDescription) -> str:
-    """Assemble JD fields for lexical fit: required + preferred skills.
-
-    These are the fields a resume is actually matched against; the surrounding
-    boilerplate of a posting adds noise rather than fit signal.
-    """
-    parts: list[str] = [*parsed_jd.required_skills, *parsed_jd.preferred_skills]
-    return " ".join(p for p in parts if p).strip()

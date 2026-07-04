@@ -45,6 +45,11 @@ pip install -r requirements-dev.txt
 # 2b. Download the spaCy model (a model download, NOT a pip package — easily missed)
 python -m spacy download en_core_web_sm
 
+# 2c. (Deployment) Install the CPU-only torch wheel to avoid pulling large CUDA
+#     packages on free-tier hosts. On a fresh/deploy environment, run this BEFORE
+#     installing sentence-transformers so the CPU wheel is resolved first:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+
 # 3. Configure environment
 cp .env.example .env    # then edit as needed
 

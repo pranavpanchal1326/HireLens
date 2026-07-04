@@ -21,3 +21,9 @@ spacy==3.8.2              # NER + PhraseMatcher for section/skill/entity extract
 scikit-learn==1.6.0       # TfidfVectorizer + cosine similarity (the trained layer).
 joblib==1.4.2             # Persist the fitted vectorizer efficiently (numpy-backed).
 pandas==2.2.3             # CSV loading/wrangling for corpus building.
+
+# Phase 2.2 — semantic embedding scorer (pretrained layer).
+sentence-transformers==3.3.1  # all-MiniLM-L6-v2 semantic similarity, CPU.
+torch==2.12.1            # Backend for sentence-transformers. Install the CPU-only
+# wheel to avoid pulling large CUDA deps on free-tier hosting (see README):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
