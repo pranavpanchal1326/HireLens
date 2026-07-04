@@ -75,7 +75,16 @@ class EmbeddingScorer:
         """
         resume_vec = self.embed(resume_text)
         jd_vec = self.embed(jd_text)
-        cosine = self._cosine(resume_vec, jd_vec)
+        return self.normalized_similarity(resume_vec, jd_vec)
+
+    @staticmethod
+    def normalized_similarity(a: np.ndarray, b: np.ndarray) -> float:
+        """Cosine similarity of two embedding vectors, mapped/clipped to [0,1].
+
+        Shared entry point so the cache-aware wrapper (2.3) scores identically
+        without re-implementing the (cos+1)/2 normalization.
+        """
+        cosine = EmbeddingScorer._cosine(a, b)
         mapped = (cosine + 1.0) / 2.0
         clipped = min(1.0, max(0.0, mapped))
         return round(clipped, _SCORE_PRECISION)
