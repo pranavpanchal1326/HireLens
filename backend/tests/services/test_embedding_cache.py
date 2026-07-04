@@ -76,6 +76,16 @@ def test_corrupt_cache_file_is_graceful_miss(cache: EmbeddingCache) -> None:
     assert cache.get("broken") is None  # graceful miss, no exception
 
 
+def test_distinct_ids_do_not_collide(cache: EmbeddingCache) -> None:
+    # "a.b" and "a_b" both sanitize to "a_b"; the id hash must keep them distinct.
+    cache.set("a.b", np.full(4, 1.0, dtype=np.float32))
+    cache.set("a_b", np.full(4, 2.0, dtype=np.float32))
+    first = cache.get("a.b")
+    second = cache.get("a_b")
+    assert first is not None and second is not None
+    assert not np.array_equal(first, second)
+
+
 def test_stats_report_counts_and_size(cache: EmbeddingCache) -> None:
     cache.set("a", np.zeros(16, dtype=np.float32))
     cache.set("b", np.zeros(16, dtype=np.float32))

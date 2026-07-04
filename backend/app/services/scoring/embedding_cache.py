@@ -14,8 +14,10 @@ rewrites), and individually inspectable for debugging, with zero DB infrastructu
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -25,11 +27,21 @@ from app.services.scoring.embedding_scorer import EmbeddingScorer
 logger = logging.getLogger(__name__)
 
 _DEFAULT_CACHE_DIR = "data/processed/embedding_cache"
+# Prefix for in-flight atomic-write temp files, so stats() can exclude a stray
+# temp left behind by a crash mid-write.
+_TMP_PREFIX = "_wtmp_"
 
 
 def _safe_key(document_id: str) -> str:
-    """Sanitize a document_id into a filesystem-safe filename stem."""
-    return "".join(c if (c.isalnum() or c in "-_") else "_" for c in document_id)
+    """Map a document_id to a unique, filesystem-safe filename stem.
+
+    A readable sanitized prefix is kept for debuggability, but a hash of the FULL
+    original id is appended so distinct ids can never collide onto the same file
+    (e.g. "a.b" and "a_b" both sanitize to "a_b" — the hash keeps them distinct).
+    """
+    digest = hashlib.sha1(document_id.encode("utf-8")).hexdigest()[:12]
+    prefix = "".join(c if (c.isalnum() or c in "-_") else "_" for c in document_id)
+    return f"{prefix[:48]}_{digest}"
 
 
 class EmbeddingCache:
@@ -71,16 +83,20 @@ class EmbeddingCache:
         fully-written new one — never a partial file.
         """
         path = self._path(document_id)
-        tmp = path.with_suffix(f".{os.getpid()}.tmp")
+        # Unique temp file in the SAME directory (so os.replace stays atomic — a
+        # cross-filesystem rename is not atomic). The ".npy" suffix means np.save
+        # writes to this exact path without appending a second extension.
+        fd, tmp_name = tempfile.mkstemp(
+            dir=self.cache_dir, prefix=_TMP_PREFIX, suffix=".npy"
+        )
+        os.close(fd)
+        tmp = Path(tmp_name)
         try:
             np.save(tmp, embedding, allow_pickle=False)
-            # np.save appends .npy to the temp path if missing; normalize it.
-            written = tmp if tmp.exists() else tmp.with_suffix(tmp.suffix + ".npy")
-            os.replace(written, path)
+            os.replace(tmp, path)
         finally:
-            for leftover in (tmp, tmp.with_suffix(tmp.suffix + ".npy")):
-                if leftover.exists():
-                    leftover.unlink()
+            if tmp.exists():
+                tmp.unlink()
 
     def invalidate(self, document_id: str) -> None:
         """Remove a cached entry (e.g. resume edited → rescan; PRD §3.1).
@@ -93,7 +109,11 @@ class EmbeddingCache:
             path.unlink()
 
     def stats(self) -> dict[str, float | int]:
-        files = list(self.cache_dir.glob("*.npy"))
+        files = [
+            f
+            for f in self.cache_dir.glob("*.npy")
+            if not f.name.startswith(_TMP_PREFIX)  # exclude stray write-temps
+        ]
         total_bytes = sum(f.stat().st_size for f in files)
         return {
             "total_cached_documents": len(files),
