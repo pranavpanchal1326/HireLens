@@ -14,7 +14,7 @@ Produced by: Phase 2/6 (scorer + trained model). Consumed by: Phase 8 (frontend)
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Literal
 
@@ -94,6 +94,11 @@ class ScoreResult(BaseModel):
     parsing_confidence: float = Field(ge=0.0, le=1.0)
     matched_skills: list[SkillMatch] = Field(default_factory=list)
     gaps: list[GapItem] = Field(default_factory=list)
+    # Confidence-rationale strings merged from the ambiguity flagger (Phase 4.3)
+    # and the decision layer (Phase 4.4). Each is individually traceable to the
+    # rule/step that produced it — the backbone of the §10.8 explainability panel
+    # and §6.3's confidence framing. Additive, defaults empty (back-compatible).
+    confidence_reasons: list[str] = Field(default_factory=list)
     feature_importance: dict[str, float] | None = None
     pipeline_version: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

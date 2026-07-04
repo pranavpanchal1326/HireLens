@@ -33,6 +33,11 @@ data/raw/*
 data/processed/*
 data/ground_truth/*
 !data/**/.gitkeep
+# ...but DO version-control the ground-truth methodology + reconciled dataset
+# (the graded substance, PRD §12/§14) — not bulk data.
+!data/ground_truth/RUBRIC.md
+!data/ground_truth/SELECTION_PROCEDURE.md
+!data/ground_truth/ground_truth_dataset.json
 
 # OS / editor
 .DS_Store

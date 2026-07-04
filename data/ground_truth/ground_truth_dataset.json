@@ -1,0 +1,7 @@
+{
+  "version": "gt-v1",
+  "pairs": [],
+  "n_raters": null,
+  "overall_inter_rater_agreement": null,
+  "notes": "seed=42; AWAITING REAL RATER INPUT — no ratings collected yet. Run scripts.prepare_ground_truth then reconcile_ground_truth once 2-3 humans complete the blind sheets. No scores fabricated."
+}

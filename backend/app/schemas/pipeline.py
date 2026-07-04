@@ -15,7 +15,7 @@ still the single source of truth and importable everywhere.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -52,5 +52,5 @@ class PipelineConfig(BaseModel):
     enabled_components: list[str]
     feature_weights: dict[str, float] | None = None
     model_reference: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = False

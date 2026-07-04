@@ -10,7 +10,7 @@ Produced by: Phase 7 (ranking/orchestration). Consumed by: Phase 8 (recruiter vi
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -51,4 +51,4 @@ class RankingResult(BaseModel):
     jd_id: str
     ranked_candidates: list[RankedCandidate] = Field(default_factory=list)
     pipeline_version: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
