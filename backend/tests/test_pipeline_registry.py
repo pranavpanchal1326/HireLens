@@ -64,3 +64,15 @@ def test_v2_embeddings_is_genuinely_embeddings_only() -> None:
     for feature, weight in cfg.feature_weights.items():
         if feature != "embedding_score":
             assert weight == 0.0, f"{feature} must be zero for v2-embeddings"
+
+
+def test_v3_hybrid_weights_are_real_equal_split_and_isolated() -> None:
+    """Phase 2.4: v3-hybrid now carries real 0.5/0.5 tfidf/embedding weights, and
+    the not-yet-computed features remain zero (no leakage)."""
+    cfg = get_pipeline_config(PipelineVersion.V3_HYBRID)
+    assert cfg.feature_weights is not None
+    assert cfg.feature_weights["tfidf_score"] == 0.5
+    assert cfg.feature_weights["embedding_score"] == 0.5
+    for feature in ("skill_overlap_pct", "exp_match", "edu_match"):
+        assert cfg.feature_weights[feature] == 0.0
+    assert round(sum(cfg.feature_weights.values()), 6) == 1.0

@@ -80,8 +80,9 @@ PIPELINE_REGISTRY: dict[PipelineVersion, PipelineConfig] = {
     ),
     PipelineVersion.V3_HYBRID: PipelineConfig(
         version=PipelineVersion.V3_HYBRID,
-        description="Hybrid TF-IDF + embeddings. "
-        "PLACEHOLDER equal weights (not tuned).",
+        description="Hybrid TF-IDF + embeddings (Phase 2.4). Implemented default: "
+        "equal 0.5/0.5 weighting — a real, defensible provisional value, still "
+        "pending Phase 6 grid-search tuning against ground truth (PRD §8.2).",
         enabled_components=["tfidf", "embeddings"],
         feature_weights=_weights(tfidf_score=0.5, embedding_score=0.5),
         model_reference=None,
