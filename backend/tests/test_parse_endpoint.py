@@ -151,7 +151,7 @@ def test_parse_empty_file() -> None:
 
 
 def test_parse_garbage_pdf(tmp_path: Path) -> None:
-    """Verify that a blank/image-only PDF (no extractable text) returns a 200 with low confidence, not a 500 error."""
+    """Verify that a blank/image-only PDF (no extractable text) returns a 400 Bad Request per PRD §8.2."""
     pdf_path = tmp_path / "blank.pdf"
     doc = fitz.open()
     doc.new_page()
@@ -165,16 +165,20 @@ def test_parse_garbage_pdf(tmp_path: Path) -> None:
             data={"document_type": "resume"},
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 400
     data = response.json()
-    parsed = ParsedResume(**data)
-    assert parsed.parsing_confidence < 0.3
+    assert "too short" in data["message"].lower() or "no recognizable words" in data["message"].lower()
 
 
 def test_parse_internal_error_hidden(tmp_path: Path) -> None:
     """Verify that unhandled pipeline errors return a safe 500 without leaking stack traces or raw details to client."""
     pdf_path = tmp_path / "valid_resume.pdf"
-    _make_text_pdf(pdf_path, "Jane Doe\njane.doe@example.com\n")
+    resume_text = (
+        "Jane Doe\njane.doe@example.com\n"
+        "Experience: Python software developer with five years of experience building web applications.\n"
+        "Skills: Python, SQL, Git, Docker, backend development."
+    )
+    _make_text_pdf(pdf_path, resume_text)
 
     with patch(
         "app.api.v1.endpoints.parse.structure_resume",

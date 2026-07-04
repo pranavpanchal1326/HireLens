@@ -14,6 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
+from app.api.v1.guardrails import validate_text_input
+
 from app.schemas.parsing import ExtractionResult, ParsedJobDescription, ParsedResume
 from app.schemas.scoring import ScoreResult
 from app.services.orchestration.agent_orchestrator import (
@@ -188,11 +190,13 @@ async def score_resume_vs_jd(
     parsed_jd = request.parsed_jd
 
     if not parsed_resume:
-        if not request.raw_resume_text or not request.raw_resume_text.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Either parsed_resume or raw_resume_text must be provided.",
-            )
+        vr = validate_text_input(
+            request.raw_resume_text,
+            "raw_resume_text",
+            custom_error="Either parsed_resume or raw_resume_text must be provided."
+        )
+        if not vr.is_valid:
+            raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
         extraction = ExtractionResult(
             raw_text=request.raw_resume_text,
             extraction_method_used="plain_text",
@@ -203,11 +207,13 @@ async def score_resume_vs_jd(
         parsed_resume = structure_resume(extraction)
 
     if not parsed_jd:
-        if not request.raw_jd_text or not request.raw_jd_text.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Either parsed_jd or raw_jd_text must be provided.",
-            )
+        vr = validate_text_input(
+            request.raw_jd_text,
+            "raw_jd_text",
+            custom_error="Either parsed_jd or raw_jd_text must be provided."
+        )
+        if not vr.is_valid:
+            raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
         extraction = ExtractionResult(
             raw_text=request.raw_jd_text,
             extraction_method_used="plain_text",

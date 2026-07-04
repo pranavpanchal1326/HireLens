@@ -29,6 +29,11 @@ from app.services.structuring.nlp_pipeline import (
     structure_job_description,
     structure_resume,
 )
+from app.api.v1.guardrails import (
+    validate_batch_size,
+    validate_text_input,
+    detect_content_quality,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,15 +115,25 @@ async def rank_candidates(
     even if some resumes fail, documenting failures per-row.
     """
     total_submitted = len(request.resumes)
+    vr = validate_batch_size(total_submitted, MAX_BATCH_SIZE)
+    if not vr.is_valid:
+        raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
 
     # 1. Parse JD Exactly Once
     parsed_jd = request.parsed_jd
     if not parsed_jd:
-        if not request.raw_jd_text or not request.raw_jd_text.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Either parsed_jd or raw_jd_text must be provided.",
-            )
+        vr = validate_text_input(
+            request.raw_jd_text,
+            "raw_jd_text",
+            custom_error="Either parsed_jd or raw_jd_text must be provided."
+        )
+        if not vr.is_valid:
+            raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
+
+        cq = detect_content_quality(request.raw_jd_text)
+        if not cq.is_acceptable:
+            raise HTTPException(status_code=400, detail=cq.reason)
+
         extraction = ExtractionResult(
             raw_text=request.raw_jd_text,
             extraction_method_used="plain_text",
@@ -142,13 +157,18 @@ async def rank_candidates(
             # Parse resume if raw text is provided
             parsed_resume = resume_input.parsed_resume
             if not parsed_resume:
-                if (
-                    not resume_input.raw_resume_text
-                    or not resume_input.raw_resume_text.strip()
-                ):
-                    raise ValueError(
-                        "No resume content provided (must provide parsed_resume or raw_resume_text)."
-                    )
+                vr = validate_text_input(
+                    resume_input.raw_resume_text,
+                    "raw_resume_text",
+                    custom_error="No resume content provided (must provide parsed_resume or raw_resume_text)."
+                )
+                if not vr.is_valid:
+                    raise ValueError(vr.error_detail)
+
+                cq = detect_content_quality(resume_input.raw_resume_text)
+                if not cq.is_acceptable:
+                    raise ValueError(cq.reason)
+
                 extraction = ExtractionResult(
                     raw_text=resume_input.raw_resume_text,
                     extraction_method_used="plain_text",

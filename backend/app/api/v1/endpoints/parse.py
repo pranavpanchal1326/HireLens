@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+
+from app.api.v1.guardrails import detect_content_quality, validate_file_upload
 from typing import Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -28,9 +30,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Enforce a strict 5MB limit to prevent memory exhaustion / denial of service.
-MAX_ALLOWED_SIZE_BYTES = 5 * 1024 * 1024
-
 
 @router.post("/parse", response_model=None)
 async def parse_document(
@@ -46,35 +45,13 @@ async def parse_document(
         - The temp file is unlinked (deleted) immediately after extraction completes.
         - No raw text or PII is written to persistent logs, databases, or cache.
     """
-    # 1. Enforce size limit via headers first (if client sent Content-Length)
-    if file and file.size is not None and file.size > MAX_ALLOWED_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail="File too large. Maximum allowed size is 5MB.",
-        )
-
-    # 2. Read file bytes and check actual size
+    # 1. Read file bytes and validate via shared guardrails module (Phase 7.7)
     file_bytes = b""
     if file:
         file_bytes = await file.read()
-        if len(file_bytes) > MAX_ALLOWED_SIZE_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail="File too large. Maximum allowed size is 5MB.",
-            )
-        if len(file_bytes) == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="Uploaded file is empty.",
-            )
-
-    # 3. Sniﬀ PDF magic bytes to prevent spoofing
-    if file and file.filename and file.filename.lower().endswith(".pdf"):
-        if not file_bytes.startswith(b"%PDF"):
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid file signature. File content does not match a valid PDF format.",
-            )
+        vr = validate_file_upload(file_bytes, file.filename)
+        if not vr.is_valid:
+            raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
 
     # 4. Resolve routing based on document_type
     if document_type == "resume":
@@ -97,7 +74,6 @@ async def parse_document(
         try:
             extractor = PDFTextExtractor()
             extraction_result = extractor.extract(tmp_path)
-            parsed_resume = structure_resume(extraction_result)
         except UnsupportedFileTypeError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         finally:
@@ -107,6 +83,12 @@ async def parse_document(
             except Exception:
                 pass
 
+        # Content quality gate (Phase 7.7 — closes PRD §8.2 non-English gap)
+        cq = detect_content_quality(extraction_result.raw_text)
+        if not cq.is_acceptable:
+            raise HTTPException(status_code=400, detail=cq.reason)
+
+        parsed_resume = structure_resume(extraction_result)
         return parsed_resume
 
     elif document_type == "jd":
