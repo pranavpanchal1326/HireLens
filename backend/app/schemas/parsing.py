@@ -37,6 +37,12 @@ class ParsingWarningCode(str, Enum):
     TABLE_OR_COLUMN_LAYOUT_DETECTED = "table_or_column_layout_detected"
     EXTRACTION_FALLBACK_USED = "extraction_fallback_used"
 
+    # --- Structuring layer (Phase 1.2) ---
+    SECTION_HEADERS_NOT_DETECTED = "section_headers_not_detected"
+    SKILL_SECTION_EMPTY_AFTER_EXTRACTION = "skill_section_empty_after_extraction"
+    EXPERIENCE_DATES_AMBIGUOUS = "experience_dates_ambiguous"
+    NO_EXPERIENCE_SECTION_FOUND = "no_experience_section_found"
+
 
 class ExtractionResult(BaseModel):
     """Raw-extraction output from the document ingestion layer (Part 1.1).

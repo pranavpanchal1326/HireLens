@@ -1,0 +1,212 @@
+# Interim bootstrap skill vocabulary for HireLens parser (Phase 1.2).
+# SUPERSEDED by the full ESCO taxonomy in Phase 3 — this exists only so the
+# parser is independently testable before Phase 3 lands. One skill per line;
+# lines starting with '#' and blank lines are ignored.
+
+# --- Programming languages ---
+Python
+Java
+JavaScript
+TypeScript
+C++
+C#
+C
+Go
+Rust
+Ruby
+PHP
+Swift
+Kotlin
+Scala
+R
+MATLAB
+Perl
+Objective-C
+Dart
+Elixir
+Haskell
+Groovy
+Julia
+Bash
+Shell Scripting
+PowerShell
+VBA
+SQL
+PL/SQL
+T-SQL
+
+# --- Web / frontend ---
+HTML
+CSS
+Sass
+React
+Angular
+Vue.js
+Next.js
+Node.js
+Express.js
+Redux
+jQuery
+Bootstrap
+Tailwind CSS
+Webpack
+GraphQL
+REST APIs
+WebSockets
+Django
+Flask
+FastAPI
+Spring Boot
+Ruby on Rails
+Laravel
+ASP.NET
+Svelte
+
+# --- Data / ML / AI ---
+Machine Learning
+Deep Learning
+Natural Language Processing
+Computer Vision
+Data Analysis
+Data Science
+Data Engineering
+Data Visualization
+Statistics
+Pandas
+NumPy
+scikit-learn
+TensorFlow
+PyTorch
+Keras
+XGBoost
+spaCy
+NLTK
+Hugging Face
+OpenCV
+Apache Spark
+Hadoop
+Kafka
+Airflow
+dbt
+Tableau
+Power BI
+Looker
+Matplotlib
+Seaborn
+Jupyter
+ETL
+Feature Engineering
+A/B Testing
+Time Series Analysis
+Recommendation Systems
+
+# --- Databases ---
+MySQL
+PostgreSQL
+MongoDB
+Redis
+Cassandra
+Oracle
+SQL Server
+SQLite
+DynamoDB
+Elasticsearch
+Neo4j
+Snowflake
+BigQuery
+Redshift
+
+# --- Cloud / DevOps ---
+AWS
+Azure
+Google Cloud Platform
+Docker
+Kubernetes
+Terraform
+Ansible
+Jenkins
+GitLab CI
+GitHub Actions
+CircleCI
+Prometheus
+Grafana
+Linux
+Nginx
+Serverless
+CI/CD
+Microservices
+Helm
+Vagrant
+
+# --- Tools / practices ---
+Git
+GitHub
+GitLab
+Bitbucket
+Jira
+Confluence
+Agile
+Scrum
+Kanban
+Test-Driven Development
+Unit Testing
+Integration Testing
+Selenium
+Pytest
+JUnit
+Object-Oriented Programming
+Functional Programming
+Design Patterns
+System Design
+API Design
+
+# --- Business / analytics ---
+Project Management
+Product Management
+Business Analysis
+Financial Analysis
+Accounting
+Budgeting
+Forecasting
+Market Research
+Digital Marketing
+SEO
+SEM
+Content Marketing
+Salesforce
+SAP
+Excel
+Microsoft Office
+Google Analytics
+CRM
+Supply Chain Management
+Operations Management
+
+# --- Professional / soft skills ---
+Leadership
+Team Management
+Communication
+Problem Solving
+Critical Thinking
+Stakeholder Management
+Public Speaking
+Negotiation
+Mentoring
+Strategic Planning
+Cross-functional Collaboration
+Customer Service
+Technical Writing
+Presentation Skills
+Time Management
+
+# --- Design ---
+UI Design
+UX Design
+Figma
+Adobe Photoshop
+Adobe Illustrator
+Sketch
+InVision
+Wireframing
+Prototyping
+User Research

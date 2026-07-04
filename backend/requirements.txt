@@ -12,3 +12,7 @@ python-dotenv==1.0.1      # .env file loading support used by pydantic-settings.
 pdfplumber==0.11.4        # Primary PDF text extractor (preserves columns/tables).
 PyMuPDF==1.25.1           # Fallback PDF extractor (fitz) when pdfplumber falls short.
 langdetect==1.0.9         # Lightweight non-English heuristic; no ML model needed.
+
+# Phase 1.2 — spaCy structuring layer.
+spacy==3.8.2              # NER + PhraseMatcher for section/skill/entity extraction.
+# NOTE: also run `python -m spacy download en_core_web_sm` after pip install.

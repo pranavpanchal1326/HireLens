@@ -42,6 +42,9 @@ source .venv/bin/activate
 # 2. Install dependencies (dev deps include runtime deps)
 pip install -r requirements-dev.txt
 
+# 2b. Download the spaCy model (a model download, NOT a pip package — easily missed)
+python -m spacy download en_core_web_sm
+
 # 3. Configure environment
 cp .env.example .env    # then edit as needed
 
