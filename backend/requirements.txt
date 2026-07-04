@@ -16,3 +16,8 @@ langdetect==1.0.9         # Lightweight non-English heuristic; no ML model neede
 # Phase 1.2 — spaCy structuring layer.
 spacy==3.8.2              # NER + PhraseMatcher for section/skill/entity extraction.
 # NOTE: also run `python -m spacy download en_core_web_sm` after pip install.
+
+# Phase 2.1 — TF-IDF lexical scorer.
+scikit-learn==1.6.0       # TfidfVectorizer + cosine similarity (the trained layer).
+joblib==1.4.2             # Persist the fitted vectorizer efficiently (numpy-backed).
+pandas==2.2.3             # CSV loading/wrangling for corpus building.
