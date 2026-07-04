@@ -234,3 +234,21 @@ def test_parse_pii_logging_prevention(
         assert secret_name not in log_message, "PII Name leaked in logs!"
         assert secret_email not in log_message, "PII Email leaked in logs!"
         assert secret_phone not in log_message, "PII Phone leaked in logs!"
+
+
+def test_parse_jd_text_non_english_rejected() -> None:
+    """Regression test for Finding F3 (Phase 7.X audit): /parse must reject non-English
+    JD text, closing the consistency gap with /rank which already applied this check.
+
+    Before this fix, non-English JD text submitted via form field passed /parse
+    but was rejected by /rank's detect_content_quality() guard.
+    """
+    non_english_jd = "Привет это описание вакансии на русском языке с информацией о работе."
+
+    response = client.post(
+        "/api/v1/parse",
+        data={"jd_text": non_english_jd, "document_type": "jd"},
+    )
+
+    assert response.status_code == 400
+    assert "english" in response.json()["message"].lower()

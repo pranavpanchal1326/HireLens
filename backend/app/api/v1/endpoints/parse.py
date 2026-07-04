@@ -132,6 +132,11 @@ async def parse_document(
                 detail="Job description text is empty.",
             )
 
+        # Content quality gate for JD text (Phase 7.X — closes /parse-vs-/rank consistency gap)
+        cq = detect_content_quality(raw_text)
+        if not cq.is_acceptable:
+            raise HTTPException(status_code=400, detail=cq.reason)
+
         extraction_result = ExtractionResult(
             raw_text=raw_text,
             extraction_method_used="plain_text",

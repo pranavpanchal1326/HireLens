@@ -1,9 +1,8 @@
 # ruff: noqa: E501
 """Aggregate router for all v1 API endpoints.
 
-Currently empty by design (Phase 0.1). Future phases attach their sub-routers
-here via ``api_router.include_router(...)`` so ``main.py`` only ever wires in
-this single aggregator.
+Wires all Phase 7 sub-routers (/parse, /score, /rank, /feedback, /metrics)
+into the single aggregator that ``main.py`` mounts under ``/api/v1``.
 """
 
 from __future__ import annotations
@@ -23,9 +22,3 @@ api_router.include_router(score_router, tags=["scoring"])
 api_router.include_router(rank_router, tags=["ranking"])
 api_router.include_router(feedback_router, prefix="/feedback", tags=["feedback"])
 api_router.include_router(metrics_router, prefix="/metrics", tags=["metrics"])
-
-
-# Aggregate router for all v1 API endpoints.
-# Future endpoints will be attached here:
-#   - api_router.include_router(metrics_router, prefix="/metrics", tags=["metrics"]) (Phase 7.6)
-
