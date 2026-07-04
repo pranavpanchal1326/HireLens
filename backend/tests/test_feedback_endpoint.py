@@ -39,6 +39,17 @@ def mock_feedback_paths(tmp_path: Path):
     feedback_module.AUDIT_LOG_PATH = orig_audit
 
 
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Use FastAPI dependency overrides to mock recruiter authentication."""
+    from app.core.auth import get_current_recruiter, RecruiterAccount
+    app.dependency_overrides[get_current_recruiter] = lambda: RecruiterAccount(
+        account_id="company_a", recruiter_id="recruiter-12"
+    )
+    yield
+    app.dependency_overrides.pop(get_current_recruiter, None)
+
+
 # 1. Successful Rater Submission
 def test_rater_feedback_success() -> None:
     payload = {
@@ -364,7 +375,7 @@ def test_provenance_logged_in_audit_log() -> None:
     assert "id" in log_entry
     assert log_entry["feedback_type"] == "rater"
     assert log_entry["submitter_identity"] == "rater-A"
-    assert "role_placeholder_todo" in log_entry
+    assert log_entry["role"] == "rater"
     assert "timestamp" in log_entry
     assert log_entry["raw_payload"] == payload
     assert log_entry["normalized_payload"]["score"] == 85.0

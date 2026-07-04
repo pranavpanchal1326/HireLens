@@ -25,6 +25,18 @@ from app.api.v1.guardrails import (
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Use FastAPI dependency overrides to mock recruiter authentication."""
+    from app.core.auth import get_current_recruiter, RecruiterAccount
+    app.dependency_overrides[get_current_recruiter] = lambda: RecruiterAccount(
+        account_id="company_a", recruiter_id="recruiter_one"
+    )
+    yield
+    app.dependency_overrides.pop(get_current_recruiter, None)
+
+
 # ============================ UNIT TESTS =====================================
 
 def test_validate_file_upload_empty():

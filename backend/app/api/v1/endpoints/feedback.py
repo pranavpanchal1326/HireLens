@@ -14,7 +14,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, HTTPException, Request, status, Depends
+from app.core.auth import RecruiterAccount, get_current_recruiter
 
 from app.schemas.feedback import (
     FeedbackRequest,
@@ -75,6 +76,7 @@ async def post_feedback(
     request: Request,
     payload: FeedbackRequest,
     x_idempotency_key: str | None = Header(None, alias="X-Idempotency-Key"),
+    current_recruiter: RecruiterAccount = Depends(get_current_recruiter),
 ) -> Any:
     """POST /feedback endpoint to log ground-truth relevance signals or real-world outcomes.
 
@@ -185,11 +187,22 @@ async def post_feedback(
                     logger.warning(f"Error loading recruiter outcomes: {e}. Initializing empty list.")
                     outcomes = []
 
+            if payload.recruiter_id != current_recruiter.recruiter_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Forbidden: Cannot log outcomes on behalf of another recruiter."
+                )
+
             # Check for existing score_id outcome
             existing_outcome = next((o for o in outcomes if o["score_id"] == payload.score_id), None)
             status_action = "created"
 
             if existing_outcome:
+                if existing_outcome["recruiter_id"] != current_recruiter.recruiter_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Forbidden: Recruiter outcome ownership validation failed."
+                    )
                 if existing_outcome["actual_outcome"] == payload.actual_outcome.value and existing_outcome["recruiter_id"] == payload.recruiter_id:
                     # Natural key duplicate
                     status_action = "duplicate"
@@ -234,7 +247,7 @@ async def post_feedback(
             "id": str(uuid.uuid4()),
             "feedback_type": payload.feedback_type,
             "submitter_identity": payload.rater_id if isinstance(payload, RaterFeedbackRequest) else payload.recruiter_id,
-            "role_placeholder_todo": "TODO (Phase 7.8): Integrate authentic recruiter/rater role from JWT claims.",
+            "role": "recruiter" if isinstance(payload, RecruiterFeedbackRequest) else "rater",
             "timestamp": datetime.now(UTC).isoformat(),
             "raw_payload": raw_payload,
             "normalized_payload": payload.model_dump(),

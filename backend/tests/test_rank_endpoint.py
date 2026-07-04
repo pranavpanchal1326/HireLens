@@ -98,7 +98,11 @@ _MOCK_TOOLS = OrchestratorTools(
 
 @pytest.fixture(autouse=True)
 def override_dependencies() -> None:
+    from app.core.auth import get_current_recruiter, RecruiterAccount
     app.dependency_overrides[get_orchestrator_tools] = lambda: _MOCK_TOOLS
+    app.dependency_overrides[get_current_recruiter] = lambda: RecruiterAccount(
+        account_id="company_a", recruiter_id="recruiter_one"
+    )
     yield
     app.dependency_overrides.clear()
 

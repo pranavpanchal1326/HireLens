@@ -34,6 +34,7 @@ from app.api.v1.guardrails import (
     validate_text_input,
     detect_content_quality,
 )
+from app.core.auth import RecruiterAccount, get_current_recruiter
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,7 @@ class RankResponse(BaseModel):
 async def rank_candidates(
     request: RankRequest,
     tools: OrchestratorTools = Depends(get_orchestrator_tools),
+    current_recruiter: RecruiterAccount = Depends(get_current_recruiter),
 ) -> RankResponse:
     """Ranks a batch of candidates against a single job description.
 
@@ -115,6 +117,10 @@ async def rank_candidates(
     even if some resumes fail, documenting failures per-row.
     """
     total_submitted = len(request.resumes)
+    logger.info(
+        f"Recruiter '{current_recruiter.recruiter_id}' (account: '{current_recruiter.account_id}') "
+        f"initiated batch rank for {total_submitted} candidates."
+    )
     vr = validate_batch_size(total_submitted, MAX_BATCH_SIZE)
     if not vr.is_valid:
         raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)

@@ -27,6 +27,7 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        headers = getattr(exc, "headers", None)
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -34,6 +35,7 @@ def register_error_handlers(app: FastAPI) -> None:
                 "message": exc.detail,
                 "request_id": request.headers.get("x-request-id"),
             },
+            headers=headers,
         )
 
     @app.exception_handler(RequestValidationError)

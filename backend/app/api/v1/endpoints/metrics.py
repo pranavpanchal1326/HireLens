@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.auth import RecruiterAccount, get_current_recruiter
 from app.api.v1.endpoints.feedback import check_ground_truth_collection_progress
 from app.api.v1.endpoints.score import get_orchestrator_tools, get_pipeline_maturity_status
 from app.schemas.scoring import ConfidenceLevel, FeatureVector, ScoreResult
@@ -278,12 +279,14 @@ def _run_local_kfold(
 @router.get("", response_model=MetricsResponse)
 def get_metrics(
     tools: OrchestratorTools = Depends(get_orchestrator_tools),
+    current_recruiter: RecruiterAccount = Depends(get_current_recruiter),
 ) -> Any:
     """GET /metrics endpoint to retrieve dashboard data (Read-Only).
 
     Sourced from Phase 5.2 (evaluate), Phase 5.4 (k-fold), Phase 7.3 (maturity),
     Phase 7.5 (progress), and persisted Phase 6.3/6.4 reports.
     """
+    logger.info(f"Recruiter '{current_recruiter.recruiter_id}' (account: '{current_recruiter.account_id}') reading metrics dashboard.")
     # 1. Load ground-truth dataset
     try:
         if DATASET_PATH.exists():

@@ -140,6 +140,17 @@ def override_tools():
     app.dependency_overrides.pop(get_orchestrator_tools, None)
 
 
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Use FastAPI dependency overrides to mock recruiter authentication."""
+    from app.core.auth import get_current_recruiter, RecruiterAccount
+    app.dependency_overrides[get_current_recruiter] = lambda: RecruiterAccount(
+        account_id="company_a", recruiter_id="recruiter_one"
+    )
+    yield
+    app.dependency_overrides.pop(get_current_recruiter, None)
+
+
 @pytest.fixture
 def populated_dataset() -> GroundTruthDataset:
     """A ground-truth dataset with 5 reconciled pairs for testing."""
