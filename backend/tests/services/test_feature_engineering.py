@@ -20,6 +20,31 @@ from app.services.scoring.feature_engineering import (
     match_education,
 )
 
+
+def test_feature_contract_order_invariant_across_phase6() -> None:
+    """Regression (Phase 6.X audit, Pass 1): the 5-feature name/order contract must
+    stay byte-identical across the FeatureVector schema, 6.3's FEATURE_ORDER, and
+    6.2's array build; and 6.4's ENSEMBLE_KEYS must be exactly the first 4 (edu_match
+    intentionally excluded). Turns the manual audit trace into an executable guard."""
+    from app.services.scoring.feature_importance import FEATURE_ORDER
+    from app.services.scoring.grid_search_tuning import ENSEMBLE_KEYS
+
+    canonical = [
+        "tfidf_score",
+        "embedding_score",
+        "skill_overlap_pct",
+        "exp_match",
+        "edu_match",
+    ]
+    # Contract schema field order (Pydantic preserves declaration order).
+    assert list(FeatureVector.model_fields.keys()) == canonical
+    # Phase 6.3 importance key order.
+    assert FEATURE_ORDER == canonical
+    # Phase 6.4 ensemble = first 4 features, edu_match excluded by design.
+    assert ENSEMBLE_KEYS == canonical[:4]
+    assert "edu_match" not in ENSEMBLE_KEYS
+
+
 # ============================ STUB SCORERS & MATCHERS ========================
 
 

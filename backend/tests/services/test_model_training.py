@@ -19,6 +19,7 @@ from app.services.scoring.model_training import (
     LogisticRegressionRegressor,
     MLModelFoldScorer,
     persist_final_models,
+    reconciled_pairs,
     train_and_validate,
     train_logistic_regression,
     train_random_forest,
@@ -170,6 +171,61 @@ def _ready_dataset() -> GroundTruthDataset:
 
 
 # ============================ TEST CASES =====================================
+
+
+def test_reconciled_pairs_matches_readiness_gate() -> None:
+    """Regression (Phase 6.X audit, Pass 2): the shared reconciled_pairs() helper
+    must agree exactly with the readiness gate's predicate, so the training set
+    can never silently diverge from is_ground_truth_ready()."""
+    from app.services.evaluation.ablation_study import (
+        _reconciled_pairs,
+        is_ground_truth_ready,
+    )
+
+    # Mixed dataset: reconciled, awaiting, and reconciled-status-but-no-score.
+    mixed = GroundTruthDataset(
+        version="gt-v1",
+        pairs=[
+            GroundTruthPair(
+                pair_id="p_ok",
+                resume_id="r_0",
+                jd_id="j_0",
+                case_type="clear_fit",
+                reconciled_score=80.0,
+                status="reconciled",
+            ),
+            GroundTruthPair(
+                pair_id="p_awaiting",
+                resume_id="r_1",
+                jd_id="j_1",
+                case_type="ambiguous",
+                status="awaiting_raters",
+            ),
+            GroundTruthPair(
+                pair_id="p_no_score",
+                resume_id="r_2",
+                jd_id="j_2",
+                case_type="clear_gap",
+                reconciled_score=None,
+                status="reconciled",
+            ),
+        ],
+    )
+
+    selected = reconciled_pairs(mixed)
+    selected_ids = [p.pair_id for p in selected]
+
+    # Only the genuinely reconciled pair survives.
+    assert selected_ids == ["p_ok"]
+    # Byte-identical to the gate's own derivation (ids).
+    assert selected_ids == _reconciled_pairs(mixed)
+    # Consistent with the boolean gate.
+    assert is_ground_truth_ready(mixed) is (len(selected) > 0)
+
+    # Empty / unready dataset yields no pairs and a False gate.
+    empty = _unready_dataset()
+    assert reconciled_pairs(empty) == []
+    assert is_ground_truth_ready(empty) is False
 
 
 def test_readiness_check_refusal() -> None:

@@ -317,6 +317,26 @@ def test_stability_report_hand_computed() -> None:
     )
 
 
+def test_single_seed_stability_std_is_none_not_zero() -> None:
+    """Regression (Phase 6.X audit, Pass 5): a single-seed run must report
+    std_importance=None, never a fake-certain 0.0. Std over one value is undefined
+    and faking it as 0.0 violates Design Blueprint P3 (honesty), diverging from
+    Phase 5.4 kfold_stability's own convention."""
+    dataset = _ready_dataset()
+    resolver = StubPairResolver()
+    tools = _tools()
+
+    report = compute_importance_stability(
+        "logistic", dataset, resolver, tools, seed_list=(42,)
+    )
+    assert report.status == "completed"
+    assert len(report.raw_runs) == 1
+    for feature in FEATURE_ORDER:
+        assert report.feature_stability[feature].std_importance is None
+        # mean is still a real, reportable number
+        assert report.feature_stability[feature].mean_importance >= 0.0
+
+
 def test_comparison_report_disagreement() -> None:
     dataset = _ready_dataset()
     resolver = StubPairResolver()

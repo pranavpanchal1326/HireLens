@@ -42,6 +42,22 @@ logger = logging.getLogger(__name__)
 # Base output directory for saved model artifacts.
 DEFAULT_MODEL_DIR = Path("data/processed/models")
 
+
+def reconciled_pairs(dataset: GroundTruthDataset) -> list[GroundTruthPair]:
+    """The reconciled pairs actually fed to Phase 6 training/importance/tuning.
+
+    Single source of truth for "which pairs count as real ground truth", so the
+    training set derivation cannot silently diverge from the readiness gate
+    (is_ground_truth_ready -> ablation_study._reconciled_pairs use the identical
+    predicate). Previously this filter was inlined in four call sites.
+    """
+    return [
+        p
+        for p in dataset.pairs
+        if p.status == "reconciled" and p.reconciled_score is not None
+    ]
+
+
 # ============================ WRAPPER CLASS =================================
 
 
@@ -290,12 +306,7 @@ def train_and_validate(
             ground_truth_n=0,
         )
 
-    reconciled_pairs = [
-        p
-        for p in ground_truth_dataset.pairs
-        if p.status == "reconciled" and p.reconciled_score is not None
-    ]
-    n_pairs = len(reconciled_pairs)
+    n_pairs = len(reconciled_pairs(ground_truth_dataset))
 
     results: list[ModelCVResult] = []
     for model_type in ("logistic", "random_forest", "xgboost"):
@@ -344,15 +355,11 @@ def persist_final_models(
         logger.warning("persist_final_models: Ground truth not ready. Refusing.")
         return []
 
-    reconciled_pairs = [
-        p
-        for p in ground_truth_dataset.pairs
-        if p.status == "reconciled" and p.reconciled_score is not None
-    ]
+    pairs = reconciled_pairs(ground_truth_dataset)
 
     # Extract X, y on full dataset
     scorer = MLModelFoldScorer("logistic", resolver, tools)
-    X, y = scorer._extract_xy(reconciled_pairs)
+    X, y = scorer._extract_xy(pairs)
 
     out_path = Path(model_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -388,7 +395,7 @@ def persist_final_models(
     # Save provenance metadata for all models
     metadata = {
         "dataset_version": ground_truth_dataset.version,
-        "n_samples": len(reconciled_pairs),
+        "n_samples": len(pairs),
         "features": feature_names,
         "timestamp": timestamp,
         "models": {

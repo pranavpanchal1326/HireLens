@@ -24,6 +24,7 @@ from app.services.orchestration.agent_orchestrator import OrchestratorTools
 from app.services.scoring.model_training import (
     LogisticRegressionRegressor,
     MLModelFoldScorer,
+    reconciled_pairs,
     train_logistic_regression,
     train_random_forest,
     train_xgboost,
@@ -60,7 +61,10 @@ class ImportanceReport(BaseModel):
 
 class FeatureStabilityStats(BaseModel):
     mean_importance: float
-    std_importance: float
+    # None (never 0.0) when fewer than 2 seeds: a spread over a single value is
+    # undefined and must not be faked as certainty. Mirrors the honesty convention
+    # of Phase 5.4's kfold_stability._aggregate (Design Blueprint P3).
+    std_importance: float | None
 
 
 class ImportanceStabilityReport(BaseModel):
@@ -249,15 +253,9 @@ def compute_importance_stability(
             message="CANNOT RUN — GROUND TRUTH NOT YET COLLECTED.",
         )
 
-    reconciled_pairs = [
-        p
-        for p in ground_truth_dataset.pairs
-        if p.status == "reconciled" and p.reconciled_score is not None
-    ]
-
     # Fit and extract X, y
     scorer = MLModelFoldScorer(model_type, resolver, tools)
-    X, y = scorer._extract_xy(reconciled_pairs)
+    X, y = scorer._extract_xy(reconciled_pairs(ground_truth_dataset))
 
     raw_runs: list[dict[str, float]] = []
 
@@ -280,10 +278,11 @@ def compute_importance_stability(
     for feature in FEATURE_ORDER:
         vals = [run[feature] for run in raw_runs]
         mean_val = float(np.mean(vals))
-        std_val = float(np.std(vals, ddof=1)) if len(vals) >= 2 else 0.0
+        # std is undefined for <2 seeds — report None, never a fake-certain 0.0.
+        std_val = float(np.std(vals, ddof=1)) if len(vals) >= 2 else None
         feature_stability[feature] = FeatureStabilityStats(
             mean_importance=round(mean_val, 6),
-            std_importance=round(std_val, 6),
+            std_importance=round(std_val, 6) if std_val is not None else None,
         )
 
     return ImportanceStabilityReport(
@@ -309,14 +308,8 @@ def compare_model_importances(
             message="CANNOT RUN — GROUND TRUTH NOT YET COLLECTED.",
         )
 
-    reconciled_pairs = [
-        p
-        for p in ground_truth_dataset.pairs
-        if p.status == "reconciled" and p.reconciled_score is not None
-    ]
-
     scorer = MLModelFoldScorer("logistic", resolver, tools)
-    X, y = scorer._extract_xy(reconciled_pairs)
+    X, y = scorer._extract_xy(reconciled_pairs(ground_truth_dataset))
 
     comparisons: dict[str, ModelComparisonEntry] = {}
 

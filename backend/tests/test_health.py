@@ -13,4 +13,8 @@ client = TestClient(app)
 def test_health_returns_ok() -> None:
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "app": settings.APP_NAME}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["app"] == settings.APP_NAME
+    assert data["version"] == "0.1.0"
+    assert "timestamp" in data
