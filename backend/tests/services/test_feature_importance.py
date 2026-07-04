@@ -355,4 +355,3 @@ def test_summary_generation_deterministic() -> None:
         "(normalized importance: 0.4500), followed by embedding_score "
         "(normalized importance: 0.3500)."
     ) in summary
-
