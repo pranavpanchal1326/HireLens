@@ -1,0 +1,9 @@
+# Phase 0.1 runtime dependencies ONLY.
+# Each later phase adds its own pinned deps when that phase is built, so every
+# phase's dependency footprint stays traceable and auditable. Do NOT pre-add
+# spaCy / scikit-learn / FAISS / sentence-transformers / XGBoost here.
+
+fastapi==0.115.6          # Web framework powering the API + /health route.
+uvicorn[standard]==0.34.0 # ASGI server used to run the app locally and in Docker.
+pydantic-settings==2.7.1  # Typed settings loaded from environment / .env.
+python-dotenv==1.0.1      # .env file loading support used by pydantic-settings.

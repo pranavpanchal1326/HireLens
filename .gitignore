@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# Databases
+*.db
+*.sqlite3
+
+# Node / frontend (Phase 8)
+node_modules/
+frontend/build/
+frontend/dist/
+
+# Data artifacts (keep folder structure via .gitkeep, ignore contents)
+data/raw/*
+data/processed/*
+data/ground_truth/*
+!data/**/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
