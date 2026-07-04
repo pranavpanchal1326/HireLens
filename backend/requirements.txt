@@ -27,3 +27,6 @@ sentence-transformers==3.3.1  # all-MiniLM-L6-v2 semantic similarity, CPU.
 torch==2.12.1            # Backend for sentence-transformers. Install the CPU-only
 # wheel to avoid pulling large CUDA deps on free-tier hosting (see README):
 #   pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Phase 3.2 — FAISS vector store for skill taxonomy search.
+faiss-cpu==1.9.0.post1   # CPU variant (never faiss-gpu) for free-tier hosting.

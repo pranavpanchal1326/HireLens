@@ -28,3 +28,20 @@ class SkillTaxonomyEntry(BaseModel):
     description: str | None = None
     skill_type: str | None = None
     source: Literal["esco"] = "esco"
+
+
+class SkillVectorEntry(BaseModel):
+    """Metadata payload for one FAISS vector (Phase 3.2).
+
+    FAISS stores only vectors + integer positions, so this parallel structure
+    maps each vector back to its skill. Preferred label AND each alt label get
+    their own vector (all sharing a concept_uri), so retrieval can match any known
+    phrasing of a skill — ``label_type`` preserves the exact-vs-synonym distinction
+    (Design Blueprint §10.6). INVARIANT: metadata list position N corresponds
+    exactly to FAISS index position N.
+    """
+
+    vector_id: int
+    concept_uri: str
+    matched_text: str
+    label_type: Literal["preferred", "alt"]
