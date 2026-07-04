@@ -18,6 +18,18 @@ import pandas as pd
 
 from app.services.rag.taxonomy_schemas import SkillTaxonomyEntry
 
+# Re-exported (Phase 3.3): the canonical normalizer now lives in a pandas-free
+# module so other layers can import it without dragging pandas in.
+from app.services.rag.text_normalization import normalize_skill_text
+
+__all__ = [
+    "ESCOTaxonomyIngester",
+    "MalformedTaxonomySourceError",
+    "normalize_skill_text",
+    "save_taxonomy",
+    "load_taxonomy",
+]
+
 logger = logging.getLogger(__name__)
 
 # ESCO skills export column names (verified against the on-disk file).
@@ -31,30 +43,10 @@ _REQUIRED_COLUMNS = (_COL_URI, _COL_PREFERRED, _COL_ALT)
 # altLabels within one cell are newline-delimited in the current ESCO export, but
 # older/other exports use pipes — split on either, robustly.
 _ALT_DELIMITER_RE = re.compile(r"[|\r\n]+")
-# Normalization: collapse any dash variant to a plain hyphen before comparing.
-_DASH_RE = re.compile(r"[‐-―−]")
-_WS_RE = re.compile(r"\s+")
 
 
 class MalformedTaxonomySourceError(Exception):
     """Raised when the ESCO source file lacks expected columns/structure."""
-
-
-def normalize_skill_text(text: str) -> str:
-    """Canonical skill-text normalization used EVERYWHERE skills are compared.
-
-    Reconciliation with Phase 1.2: SkillExtractor matches via spaCy
-    PhraseMatcher(attr="LOWER"), i.e. case-insensitive lowercasing with no
-    punctuation handling. This function is a compatible SUPERSET — it lowercases
-    (so it agrees with LOWER matching), collapses whitespace, and standardizes
-    dash variants to a plain hyphen so "e-commerce" / "e—commerce" compare equal.
-    The extra dash/whitespace handling never disagrees with LOWER matching on the
-    plain ASCII skills the seed vocabulary uses; it only adds robustness for the
-    messier ESCO labels.
-    """
-    lowered = text.lower()
-    dashed = _DASH_RE.sub("-", lowered)
-    return _WS_RE.sub(" ", dashed).strip()
 
 
 class ESCOTaxonomyIngester:
