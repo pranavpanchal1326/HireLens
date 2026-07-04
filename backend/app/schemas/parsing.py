@@ -13,8 +13,45 @@ orchestrator), Phase 8 (frontend).
 from __future__ import annotations
 
 import uuid
+from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+
+class ParsingWarningCode(str, Enum):
+    """Machine-readable warning codes emitted by the extraction layer (Part 1.1).
+
+    Maps to: PRD §8.2 (input validation / guardrails) and Design Blueprint §10.10
+    (warm, blameless error copy). These are MACHINE codes only; a later UI phase
+    maps each to human-facing warm language without re-deriving detection logic.
+
+    EXACTLY these values for the extraction layer's scope — do not add more here.
+    """
+
+    EMPTY_DOCUMENT = "empty_document"
+    IMAGE_ONLY_SUSPECTED = "image_only_suspected"
+    NON_ENGLISH_SUSPECTED = "non_english_suspected"
+    GARBLED_TEXT_SUSPECTED = "garbled_text_suspected"
+    # Informational (NOT failures):
+    TABLE_OR_COLUMN_LAYOUT_DETECTED = "table_or_column_layout_detected"
+    EXTRACTION_FALLBACK_USED = "extraction_fallback_used"
+
+
+class ExtractionResult(BaseModel):
+    """Raw-extraction output from the document ingestion layer (Part 1.1).
+
+    Maps to: PRD §8.2. This feeds the raw_text + early parsing_warnings of
+    ``ParsedResume`` downstream. ``is_processable`` is False only for hard-stop
+    conditions (EMPTY_DOCUMENT, IMAGE_ONLY_SUSPECTED); other warnings are soft and
+    carried forward while processing continues.
+    """
+
+    raw_text: str
+    extraction_method_used: Literal["pdfplumber", "pymupdf", "plain_text"]
+    warnings: list[ParsingWarningCode] = Field(default_factory=list)
+    is_processable: bool
+    page_count: int | None = None
 
 
 class ParsedSection(BaseModel):

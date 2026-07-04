@@ -7,3 +7,4 @@ httpx==0.28.1          # Required by FastAPI's TestClient; async HTTP client.
 black==24.10.0         # Opinionated code formatter.
 ruff==0.9.2            # Fast linter.
 mypy==1.14.1           # Static type checker.
+reportlab==4.2.5       # DEV-ONLY: generates synthetic test PDFs; never used in prod.

@@ -7,3 +7,8 @@ fastapi==0.115.6          # Web framework powering the API + /health route.
 uvicorn[standard]==0.34.0 # ASGI server used to run the app locally and in Docker.
 pydantic-settings==2.7.1  # Typed settings loaded from environment / .env.
 python-dotenv==1.0.1      # .env file loading support used by pydantic-settings.
+
+# Phase 1.1 — document extraction layer.
+pdfplumber==0.11.4        # Primary PDF text extractor (preserves columns/tables).
+PyMuPDF==1.25.1           # Fallback PDF extractor (fitz) when pdfplumber falls short.
+langdetect==1.0.9         # Lightweight non-English heuristic; no ML model needed.
