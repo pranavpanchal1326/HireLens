@@ -22,7 +22,6 @@ _SHEET_COLUMNS = [
     "pair_id",
     "resume_id",
     "jd_id",
-    "case_type",
     "score",
     "justification",
 ]
@@ -57,9 +56,8 @@ def write_blind_rating_sheets(
                 writer.writerow(
                     {
                         "pair_id": cp.pair_id,
-                        "resume_id": cp.resume_id,
-                        "jd_id": cp.jd_id,
-                        "case_type": cp.case_type,
+                        "resume_id": f'="{cp.resume_id}"',
+                        "jd_id": f'="{cp.jd_id}"',
                         "score": "",  # rater fills
                         "justification": "",  # rater fills
                     }
