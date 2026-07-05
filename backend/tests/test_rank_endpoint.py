@@ -152,7 +152,7 @@ def test_rank_success_full_batch() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -216,7 +216,7 @@ def test_rank_partial_failures() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -252,7 +252,7 @@ def test_rank_jd_parsed_exactly_once() -> None:
         ],
     }
 
-    with patch("app.api.v1.endpoints.rank.structure_job_description") as mock_parse_jd:
+    with patch("app.services.ranking.batch_ranking.structure_job_description") as mock_parse_jd:
         mock_parse_jd.return_value = ParsedJobDescription(
             raw_text="Need Python developer.",
             required_skills=["Python"],
@@ -296,9 +296,13 @@ def test_rank_maturity_called_exactly_once() -> None:
 
 
 def test_rank_oversized_batch_rejection() -> None:
-    """Assert that requests containing more than MAX_BATCH_SIZE resumes are rejected with HTTP 422."""
+    """Assert that requests exceeding MAX_BATCH_SIZE (now 1000) are rejected with HTTP 422.
+
+    R5 note: batches of 51-1000 are no longer rejected — they run asynchronously.
+    Only batches beyond the hard 1000 ceiling are refused at validation time.
+    """
     resumes_payload = [
-        {"candidate_id": str(i), "raw_resume_text": "skills"} for i in range(51)
+        {"candidate_id": str(i), "raw_resume_text": "skills"} for i in range(1001)
     ]
     req_payload = {
         "raw_jd_text": "JD text",
@@ -307,7 +311,7 @@ def test_rank_oversized_batch_rejection() -> None:
 
     response = client.post("/api/v1/rank", json=req_payload)
     assert response.status_code == 422
-    assert "at most 50 items" in response.json()["details"][0]["msg"]
+    assert "at most 1000 items" in response.json()["details"][0]["msg"]
 
 
 def test_rank_tied_score_deterministic_ordering() -> None:
@@ -345,7 +349,7 @@ def test_rank_tied_score_deterministic_ordering() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         # Run it multiple times to ensure absolute stability
@@ -439,7 +443,7 @@ def test_rank_field_parity_lossless() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -521,7 +525,7 @@ def test_rank_single_candidate_batch() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -577,7 +581,7 @@ def test_rank_preparsed_resumes_success() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -605,7 +609,7 @@ def test_rank_all_candidates_failed() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -648,7 +652,7 @@ def test_rank_duplicate_candidate_ids() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)
@@ -706,7 +710,7 @@ def test_rank_zero_score_deterministic_order() -> None:
     }
 
     with patch(
-        "app.api.v1.endpoints.rank.run_orchestration",
+        "app.services.ranking.batch_ranking.run_orchestration",
         side_effect=mock_orchestration_run,
     ):
         response = client.post("/api/v1/rank", json=req_payload)

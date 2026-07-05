@@ -1,12 +1,82 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   HireLens Design Token Spine (Design Blueprint §5.7 / §7 / §17)
+   Installed verbatim per Phase R1. Do not alter these values.
+   Two themes (seeker/recruiter) are semantic layers on ONE token spine: they
+   share variable NAMES with different VALUES, so component code never branches
+   on theme — it reads the current CSS variable.
+   ============================================================================ */
+:root {
+  --ember-50:#FEEDE7; --ember-100:#FBD3C6; --ember-300:#F2896A;
+  --ember-500:#E85A2C; --ember-700:#A6330F; --ember-score:#C7431A;
+  --slate-700:#33534F; --slate-400:#5C7A75;
+  --fit-fill:#E4EFE7; --fit-500:#2C8C5E; --fit-text:#1C6B45;
+  --gap-fill:#FAEBD3; --gap-500:#D98A2B; --gap-text:#8A5410;
+  --lowconf-fill:#E4EAE8; --lowconf-500:#8C9A97; --lowconf-text:#3E524F;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-pill:999px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px;
+  --shadow-sm:0 2px 8px rgba(42,33,28,.06);
+  --shadow-md:0 12px 32px rgba(42,33,28,.08);
+  --ease-settle:cubic-bezier(.22,1,.36,1);
+  --dur-fast:200ms; --dur-base:320ms; --dur-reveal:560ms;
+}
+[data-theme="seeker"] {
+  --canvas:#FBF5EF; --surface:#FFFFFF; --ink:#2A211C;
+  --muted:#7C6F66; --border:#EFE4D8; --card-radius:var(--r-lg);
+}
+[data-theme="recruiter"] {
+  --canvas:#F3F0EA; --surface:#FCFBF8; --ink:#23201C;
+  --muted:#6E6A62; --border:#E3DED5; --card-radius:var(--r-md);
+}
+
+/* ============================================================================
+   Tailwind v4 @theme bridge — expose the token spine as native utilities so
+   components can use bg-ember-500, text-ink, bg-canvas, border-border, etc.
+   Semantic (theme-driven) colors reference the runtime vars above, so a single
+   utility resolves correctly under either data-theme.
+   ============================================================================ */
 @theme {
-  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  
-  /* Custom transitions & animations */
-  --animate-fade-in: fade-in 0.2s ease-out;
-  --animate-slide-up: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Typography (§7.1): Hanken Grotesk for all UI + numerals; Fraunces display only. */
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+
+  /* Ember scale + semantic accent palettes (static). */
+  --color-ember-50: var(--ember-50);
+  --color-ember-100: var(--ember-100);
+  --color-ember-300: var(--ember-300);
+  --color-ember-500: var(--ember-500);
+  --color-ember-700: var(--ember-700);
+  --color-ember-score: var(--ember-score);
+  --color-slate-700: var(--slate-700);
+  --color-slate-400: var(--slate-400);
+  --color-fit-fill: var(--fit-fill);
+  --color-fit-500: var(--fit-500);
+  --color-fit-text: var(--fit-text);
+  --color-gap-fill: var(--gap-fill);
+  --color-gap-500: var(--gap-500);
+  --color-gap-text: var(--gap-text);
+  --color-lowconf-fill: var(--lowconf-fill);
+  --color-lowconf-500: var(--lowconf-500);
+  --color-lowconf-text: var(--lowconf-text);
+
+  /* Semantic theme-driven surfaces/text (resolve per data-theme). */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  /* Radii (§17): map Tailwind rounded-* onto the blueprint scale. */
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-xl);
+
+  /* Motion tokens. */
+  --animate-fade-in: fade-in var(--dur-fast) var(--ease-settle);
+  --animate-slide-up: slide-up var(--dur-base) var(--ease-settle);
 }
 
 @keyframes fade-in {
@@ -19,30 +89,59 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Tabular numerals (§7.3): apply wherever scores/percentages/ranks render. */
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* ============================================================================
+   Aperture Bloom motion system (Design Blueprint §6.5 / §9).
+   ~1.2s total, all on --ease-settle, nothing bouncy, then FULLY STILL.
+   At-rest CSS = the resolved state, so prefers-reduced-motion users (who get no
+   animation) see identical information with zero theater.
+   ============================================================================ */
+@keyframes ab-open {
+  from { transform: scale(0.2) rotate(-12deg); }
+  to   { transform: scale(1) rotate(0deg); }
+}
+@keyframes ab-petal-in {
+  from { opacity: 0; }
+  to   { opacity: 0.7; }
+}
+@keyframes ab-ring-sweep {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: var(--ab-dash-rest); }
+}
+@keyframes ab-number-focus {
+  from { filter: blur(16px); opacity: 0; transform: scale(0.9); }
+  to   { filter: blur(0);    opacity: 1; transform: scale(1); }
+}
+@keyframes ab-pulse {
+  from { transform: scale(1);   opacity: 0.35; }
+  to   { transform: scale(1.35); opacity: 0; }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #3f3f46; /* zinc-700 */
-  border-radius: 3px;
+@media (prefers-reduced-motion: no-preference) {
+  .ab-petals { transform-box: fill-box; transform-origin: center; animation: ab-open 0.72s var(--ease-settle) both; }
+  .ab-petal  { animation: ab-petal-in 0.4s var(--ease-settle) both; }
+  .ab-ring   { animation: ab-ring-sweep 0.8s var(--ease-settle) 0.1s both; }
+  .ab-number { transform-box: fill-box; transform-origin: center; animation: ab-number-focus 0.5s var(--ease-settle) 0.62s both; }
+  .ab-pulse  { transform-box: fill-box; transform-origin: center; animation: ab-pulse 0.6s var(--ease-settle) 1s both; }
+}
+/* Reduced motion: pulse ring never shown; everything else is already at-rest. */
+@media (prefers-reduced-motion: reduce) {
+  .ab-pulse { display: none; }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #52525b; /* zinc-600 */
-}
+/* Custom scrollbars (re-skinned to the token spine). */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Body global styles */
+/* Body global styles — light warm canvas per the active theme. */
 body {
   font-family: var(--font-sans);
-}
-
-pre, code {
-  font-family: var(--font-mono);
+  background: var(--canvas);
+  color: var(--ink);
 }

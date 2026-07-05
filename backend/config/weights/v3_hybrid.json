@@ -1,0 +1,11 @@
+{
+  "pipeline_version": "v3-hybrid",
+  "description": "Provisional (untuned) ensemble weights for the PRD 8.2 four-term formula: final_score = w1*tfidf + w2*embedding + w3*skill_overlap + w4*exp_match. Equal-ish placeholder pending grid-search tuning (v4). edu_match is intentionally NOT weighted here (live petal only). Weights must sum to 1.0.",
+  "tuned": false,
+  "weights": {
+    "tfidf_score": 0.25,
+    "embedding_score": 0.25,
+    "skill_overlap_pct": 0.30,
+    "exp_match": 0.20
+  }
+}

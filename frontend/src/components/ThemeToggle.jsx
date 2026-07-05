@@ -1,32 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 
+// R1: repurposed from light/dark (blueprint has no dark axis) to the blueprint's
+// seeker <-> recruiter theme layers, toggled via the data-theme attribute.
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(true);
+  const [theme, setTheme] = useState('seeker');
 
   useEffect(() => {
-    // Initial check based on html class
-    const isHtmlDark = document.documentElement.classList.contains('dark');
-    setIsDark(isHtmlDark);
+    const current = document.documentElement.getAttribute('data-theme') || 'seeker';
+    setTheme(current);
   }, []);
 
   const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove('dark');
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      setIsDark(true);
-    }
+    const next = theme === 'seeker' ? 'recruiter' : 'seeker';
+    document.documentElement.setAttribute('data-theme', next);
+    setTheme(next);
   };
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0f] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-200 shadow-sm"
-      aria-label="Toggle theme"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-surface text-muted hover:text-ink hover:bg-canvas transition-all duration-200 shadow-sm text-xs font-medium capitalize"
+      aria-label="Toggle seeker or recruiter theme"
     >
-      {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      {theme === 'seeker' ? <User className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+      {theme}
     </button>
   );
 }

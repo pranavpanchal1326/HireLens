@@ -189,15 +189,14 @@ def test_score_endpoint_empty_text_http():
 
 
 def test_rank_endpoint_oversized_batch_http():
-    # Send 51 candidates to rank endpoint (above limit of 50)
-    resumes = [{"candidate_id": f"c-{i}", "raw_resume_text": "Python experience"} for i in range(51)]
+    # R5: batches of 51-1000 now run asynchronously; only >1000 is rejected at validation.
+    resumes = [{"candidate_id": f"c-{i}", "raw_resume_text": "Python experience"} for i in range(1001)]
     payload = {
         "raw_jd_text": "Looking for python developers.",
         "resumes": resumes,
     }
     response = client.post("/api/v1/rank", json=payload)
-    # The Pydantic model validation or batch check will trigger
-    # Pydantic v2 max_length is 50, which triggers validation error (422) or our own 400 check
+    # Pydantic v2 max_length is now 1000 → 1001 triggers validation error (422) or our own 400 check.
     assert response.status_code in (400, 422)
 
 
@@ -237,7 +236,7 @@ def test_rank_endpoint_non_english_candidate_http():
         ]
     }
 
-    with patch("app.api.v1.endpoints.rank.run_orchestration", return_value=mock_score):
+    with patch("app.services.ranking.batch_ranking.run_orchestration", return_value=mock_score):
         response = client.post("/api/v1/rank", json=payload)
         assert response.status_code == 200
         data = response.json()

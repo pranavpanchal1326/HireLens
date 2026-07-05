@@ -297,7 +297,8 @@ class TestPass3GuardrailsRetrofit:
 
     # /rank: oversized batch, non-English candidate isolated, valid batch
     def test_rank_rejects_oversized_batch(self):
-        resumes = [{"candidate_id": f"c-{i}", "raw_resume_text": "Python experience"} for i in range(51)]
+        # R5: 51-1000 now run async; only >1000 is rejected at validation.
+        resumes = [{"candidate_id": f"c-{i}", "raw_resume_text": "Python experience"} for i in range(1001)]
         r = client.post("/api/v1/rank", json={"raw_jd_text": SYNTHETIC_JD_TEXT, "resumes": resumes}, auth=ACCT_A)
         assert r.status_code in (400, 422)
 

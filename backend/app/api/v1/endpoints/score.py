@@ -10,14 +10,19 @@ import asyncio
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.api.v1.guardrails import validate_text_input
 
 from app.schemas.parsing import ExtractionResult, ParsedJobDescription, ParsedResume
+from app.schemas.privacy import AnonymizationReport
 from app.schemas.scoring import ScoreResult
+from app.services.privacy.anonymizer import anonymize_text
+from app.services.ratelimit.limiter import FreemiumRateLimiter
+from app.services.ratelimit.scan_store import JSONFileScanStore
 from app.services.orchestration.agent_orchestrator import (
     OrchestratorTools,
     run_orchestration,
@@ -48,6 +53,38 @@ SCORE_TIMEOUT_SECONDS = 10.0
 _EMBEDDING_SCORER: EmbeddingScorer | None = None
 _TFIDF_SCORER: TFIDFScorer | None = None
 _ORCHESTRATOR_TOOLS: OrchestratorTools | None = None
+_RATE_LIMITER: FreemiumRateLimiter | None = None
+
+
+def get_rate_limiter() -> FreemiumRateLimiter:
+    """Provide the freemium scan limiter (singleton over a file-backed store).
+
+    R3 INTERIM: the JSON file store survives restarts but is not multi-worker
+    safe (see scan_store.py). Overridable in tests via dependency_overrides.
+    """
+    global _RATE_LIMITER
+    if _RATE_LIMITER is None:
+        repo_root = Path(__file__).resolve().parents[5]
+        store_path = repo_root / "data" / "processed" / "freemium_scans.json"
+        _RATE_LIMITER = FreemiumRateLimiter(JSONFileScanStore(store_path))
+    return _RATE_LIMITER
+
+
+def resolve_anon_id(http_request: Request) -> str:
+    """Resolve the anonymous seeker identifier for rate limiting.
+
+    PRIMARY: the first-party ``X-Anon-Id`` header — a token the user's own browser
+    holds (set client-side in a later frontend phase). This is disclosed, not a
+    covert fingerprint.
+    LAST-RESORT FALLBACK (documented, not primary): the client IP, used ONLY when
+    no first-party id is supplied. This is deliberately coarse and not covert
+    fingerprinting (no UA/device-characteristic hashing).
+    """
+    anon_id = http_request.headers.get("x-anon-id")
+    if anon_id and anon_id.strip():
+        return f"anon:{anon_id.strip()}"
+    client_host = http_request.client.host if http_request.client else "unknown"
+    return f"ip:{client_host}"
 
 
 def get_orchestrator_tools() -> OrchestratorTools:
@@ -157,6 +194,15 @@ class ScoreRequest(BaseModel):
     parsed_jd: ParsedJobDescription | None = None
     raw_resume_text: str | None = None
     raw_jd_text: str | None = None
+    # Phase 9.2 blind mode: opt-in, default OFF (Design Blueprint §11.3 — a visible
+    # user toggle, never a silent default). Strips identity signals from the scored
+    # resume free-text BEFORE parsing/scoring, and discloses what was removed.
+    # Applies only to the ``raw_resume_text`` path; if a pre-parsed ``parsed_resume``
+    # is supplied, anonymization is the caller's responsibility (flagged, not silent).
+    blind_mode: bool = False
+    # Whether the source resume document carried a photo. Photos live in the file,
+    # not the text, so the caller reports this so blind mode can disclose its removal.
+    resume_photo_present: bool = False
 
 
 class ScoreResponse(BaseModel):
@@ -170,6 +216,13 @@ class ScoreResponse(BaseModel):
         ...,
         description="Fidelity details showing if the scoring engine is using provisional or tuned weights.",
     )
+    # Present only when blind_mode was requested. Carries the "what we stripped and
+    # why" disclosure feed (categories + hashes, never raw PII) for Design
+    # Blueprint §11.3's transparency panel. None when blind mode was off.
+    anonymization: AnonymizationReport | None = Field(
+        default=None,
+        description="Blind-mode disclosure feed. Null unless blind_mode was requested.",
+    )
 
 
 # ============================ ROUTE HANDLER =================================
@@ -178,16 +231,34 @@ class ScoreResponse(BaseModel):
 @router.post("/score", response_model=ScoreResponse)
 async def score_resume_vs_jd(
     request: ScoreRequest,
+    http_request: Request,
     tools: OrchestratorTools = Depends(get_orchestrator_tools),
-) -> ScoreResponse:
+    rate_limiter: FreemiumRateLimiter = Depends(get_rate_limiter),
+) -> ScoreResponse | JSONResponse:
     """Computes a detailed fit score between a resume and a job description.
 
     Supports both pre-parsed inputs and raw text (reusing Phase 7.2 parsing).
     Enforces a strict 10.0-second execution timeout.
     """
+    # 0. Freemium gate (R3) — the FIRST check, before any parsing/scoring compute
+    # is spent, so a limit-reached request is rejected cheaply. Applies to the
+    # anonymous seeker /score path ONLY; recruiter routes are untouched.
+    anon_id = resolve_anon_id(http_request)
+    rl = rate_limiter.check_and_increment(anon_id)
+    if not rl.allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "reason": "FREEMIUM_LIMIT_REACHED",
+                "remaining": rl.remaining,
+                "resets_at": rl.resets_at.isoformat(),
+            },
+        )
+
     # 1. Input Resolution and Validation
     parsed_resume = request.parsed_resume
     parsed_jd = request.parsed_jd
+    anonymization: AnonymizationReport | None = None
 
     if not parsed_resume:
         vr = validate_text_input(
@@ -197,8 +268,16 @@ async def score_resume_vs_jd(
         )
         if not vr.is_valid:
             raise HTTPException(status_code=vr.http_status, detail=vr.error_detail)
+        resume_text = request.raw_resume_text
+        # Phase 9.2 blind mode: strip identity signals BEFORE parsing/scoring so the
+        # removed terms never reach the scorer. Opt-in; default off.
+        if request.blind_mode:
+            anonymization = anonymize_text(
+                resume_text, photo_present=request.resume_photo_present
+            )
+            resume_text = anonymization.anonymized_text
         extraction = ExtractionResult(
-            raw_text=request.raw_resume_text,
+            raw_text=resume_text,
             extraction_method_used="plain_text",
             warnings=[],
             is_processable=True,
@@ -248,7 +327,16 @@ async def score_resume_vs_jd(
     maturity_str = f"Pipeline maturity status: [{maturity['status']}]. Weights: [{maturity['weights_status']}]. Models: [{maturity['model_status']}]."
     score_result.confidence_reasons.append(maturity_str)
 
+    # Honesty: if blind mode was requested on a pre-parsed resume (the one path
+    # this service can't anonymize), say so rather than silently ignoring it.
+    if request.blind_mode and anonymization is None:
+        score_result.confidence_reasons.append(
+            "Blind mode was requested but a pre-parsed resume was supplied; "
+            "anonymization applies only to the raw_resume_text path and was NOT applied here."
+        )
+
     return ScoreResponse(
         score_result=score_result,
         pipeline_maturity=maturity,
+        anonymization=anonymization,
     )

@@ -46,8 +46,11 @@ Step order/names/count unchanged throughout.
 
 from __future__ import annotations
 
+import json
+import logging
 import math
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from app.core.pipeline_registry import get_active_pipeline_version
@@ -70,6 +73,11 @@ from app.services.orchestration.ambiguity_rules import (
     ConfidenceBand,
     flag_ambiguity,
 )
+from app.services.scoring.education_matcher import EducationMatcher
+
+# Stateless degree-level matcher (R6). Safe as a module singleton — no models,
+# no I/O. Used for the LIVE edu_match petal; not weighted into final_score.
+_DEFAULT_EDUCATION_MATCHER = EducationMatcher()
 
 if TYPE_CHECKING:  # heavy tool types imported for annotations only
     from app.services.rag.rag_similar_case_lookup import SimilarCaseStore
@@ -81,16 +89,50 @@ if TYPE_CHECKING:  # heavy tool types imported for annotations only
 # Number of similar past cases to pull for calibration (Phase 3.4).
 CALIBRATION_TOP_K = 5
 
+logger = logging.getLogger(__name__)
+
 # STEP 5 ensemble weights (PRD §8.2 formula:
 #   final_score = w1*tfidf + w2*embedding + w3*skill_overlap + w4*experience).
-# THESE WEIGHTS ARE PLACEHOLDERS — Phase 6.4 grid search will OVERWRITE them via
-# calibration against ground truth. Do NOT treat as final tuned values. Sum to 1.0.
-PROVISIONAL_WEIGHTS: dict[str, float] = {
+# R6: weights are now sourced from a VERSIONED JSON config (config/weights/*.json)
+# instead of hardcoded constants, so grid search (grid_search_tuning.py) can emit a
+# tuned version file and pipeline versioning per §8.2 works. The literal dict below
+# is only a fail-safe default if the config file is missing/corrupt.
+_WEIGHTS_CONFIG_DIR = Path(__file__).resolve().parents[3] / "config" / "weights"
+_DEFAULT_WEIGHTS_VERSION = "v3_hybrid"
+_FALLBACK_WEIGHTS: dict[str, float] = {
     "tfidf_score": 0.25,
     "embedding_score": 0.25,
     "skill_overlap_pct": 0.30,
     "exp_match": 0.20,
 }
+
+
+def load_ensemble_weights(version: str = _DEFAULT_WEIGHTS_VERSION) -> dict[str, float]:
+    """Load the 4-term ensemble weights from a versioned config file.
+
+    Falls back to ``_FALLBACK_WEIGHTS`` (logged) if the file is absent or invalid,
+    so a missing config never crashes scoring. Does NOT normalize/validate the sum
+    beyond a soft warning — the config file is the source of truth.
+    """
+    path = _WEIGHTS_CONFIG_DIR / f"{version}.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        weights = data["weights"]
+        if abs(sum(weights.values()) - 1.0) > 1e-6:
+            logger.warning("Ensemble weights %s do not sum to 1.0: %s", version, weights)
+        return {k: float(v) for k, v in weights.items()}
+    except (OSError, ValueError, KeyError) as exc:
+        logger.warning(
+            "Could not load ensemble weights '%s' (%s); using fallback constants.",
+            version,
+            exc,
+        )
+        return dict(_FALLBACK_WEIGHTS)
+
+
+# Loaded once at import; the config file is the single source of truth (§8.2
+# "weights tuned via grid search ... not hand-picked"). Name kept for back-compat.
+PROVISIONAL_WEIGHTS: dict[str, float] = load_ensemble_weights()
 
 # STEP 5: spread across the 4 weighted features beyond which we pull the final
 # confidence band down one tier (a broader internal-disagreement check than
@@ -163,6 +205,7 @@ class _OrchestrationState:
     matched_skills: list[SkillMatch] = field(default_factory=list)  # STEP 2
     gaps: list[GapItem] = field(default_factory=list)  # STEP 2
     exp_match: float | None = None  # STEP 3 (experience matcher, Phase 4.4)
+    edu_match: float | None = None  # STEP 3b (education matcher, R6 — live petal)
     ambiguity_flag: AmbiguityFlag | None = None  # STEP 4 (Phase 4.3)
 
 
@@ -256,6 +299,29 @@ def _step_experience_years_matching(
             f"STEP 3 experience_years_matching: exp_match out of [0,1]: {exp!r}"
         )
     return float(exp)
+
+
+def _step_education_matching(
+    resume: ParsedResume, jd: ParsedJobDescription
+) -> float:
+    """STEP 3b (LIVE, R6) — degree-level match → edu_match in [0,1].
+
+    Uses the stateless module-default EducationMatcher (bias-safe: degree level
+    only, never institution). This is the LIVE 5th feature-vector petal; it is NOT
+    weighted into the §8.2 4-term final_score.
+    """
+    _require_parsed(resume, jd)
+    try:
+        edu = _DEFAULT_EDUCATION_MATCHER.match(resume, jd)
+    except Exception as exc:
+        raise OrchestrationToolError(
+            f"STEP 3b education_matching: matcher raised on this input: {exc}"
+        ) from exc
+    if not isinstance(edu, int | float) or not (0.0 <= float(edu) <= 1.0):
+        raise OrchestrationValidationError(
+            f"STEP 3b education_matching: edu_match out of [0,1]: {edu!r}"
+        )
+    return float(edu)
 
 
 _CALIBRATION_FIELDS = (
@@ -371,14 +437,16 @@ def compute_final_decision(
     embedding = hybrid.feature_vector.embedding_score
     skill_overlap = step_outputs.skill_overlap_pct or 0.0
     exp = step_outputs.exp_match or 0.0
-    # No education matcher exists; edu_match is honestly 0.0 and is NOT weighted in
-    # the §8.2 4-term formula (it remains in the vector for the Phase 6 model).
+    # R6: edu_match is now LIVE (degree-level, bias-safe) so the 5th petal is real.
+    # It remains DELIBERATELY UNWEIGHTED — the §8.2 final_score stays a 4-term sum;
+    # edu_match feeds only the feature vector (petal render + Phase-6 model).
+    edu = step_outputs.edu_match or 0.0
     feature_vector = FeatureVector(
         tfidf_score=tfidf,
         embedding_score=embedding,
         skill_overlap_pct=skill_overlap,
         exp_match=exp,
-        edu_match=0.0,
+        edu_match=edu,
     )
 
     weighted = (
@@ -494,6 +562,10 @@ def run_orchestration(
 
     # STEP 3 — experience/years matching (Phase 4.4, LIVE)
     state.exp_match = _step_experience_years_matching(parsed_resume, parsed_jd, tools)
+
+    # STEP 3b — education/degree-level matching (R6, LIVE — feeds the 5th petal;
+    # NOT weighted into the §8.2 4-term final_score).
+    state.edu_match = _step_education_matching(parsed_resume, parsed_jd)
 
     # STEP 4 — ambiguity flagging (Phase 4.3, LIVE)
     state.ambiguity_flag = _step_ambiguity_flagging(
