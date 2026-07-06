@@ -31,6 +31,7 @@ from app.services.rag.faiss_index_builder import FAISSSkillIndexQuerier, load_in
 from app.services.rag.rag_similar_case_lookup import SimilarCaseStore
 from app.services.rag.skill_matcher import SkillMatcher
 from app.services.rag.taxonomy_ingestion import load_taxonomy
+from app.services.scoring.embedding_cache import CachedEmbeddingScorer, EmbeddingCache
 from app.services.scoring.embedding_scorer import EmbeddingScorer
 from app.services.scoring.experience_matcher import ExperienceMatcher
 from app.services.scoring.hybrid_scorer import HybridScorer
@@ -100,7 +101,12 @@ def get_orchestrator_tools() -> OrchestratorTools:
         if _TFIDF_SCORER is None:
             _TFIDF_SCORER = TFIDFScorer()
 
-        hybrid_scorer = HybridScorer(_TFIDF_SCORER, _EMBEDDING_SCORER)
+        # HybridScorer expects a CACHE-AWARE embedding scorer whose score() takes
+        # (resume_id, resume_text, jd_id, jd_text) so embeddings are keyed/reused
+        # across requests. Passing the raw EmbeddingScorer (2-arg score) is an
+        # arity mismatch that crashes STEP 1 hybrid scoring.
+        cached_embedding_scorer = CachedEmbeddingScorer(_EMBEDDING_SCORER, EmbeddingCache())
+        hybrid_scorer = HybridScorer(_TFIDF_SCORER, cached_embedding_scorer)
 
         # 2. Dynamic Path Resolution
         repo_root = Path(__file__).resolve().parents[5]

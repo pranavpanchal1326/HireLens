@@ -89,9 +89,56 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* Slide-over panel entrance (recruiter explainability, §10.8). Settles, no bounce. */
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
 /* Tabular numerals (§7.3): apply wherever scores/percentages/ranks render. */
 @utility tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   Typography scale (§7.2) as semantic utilities so screens never hardcode
+   sizes. Sentence case is a content rule (§7.3), enforced in copy not CSS.
+   Line-height 1.5 body / 1.2 display+score (§7.3).
+   ============================================================================ */
+@utility text-display {  /* hero headline / seeker landing */
+  font-family: var(--font-display);
+  font-size: 40px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;
+}
+@utility text-h1 { font-size: 28px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+@utility text-h2 { font-size: 22px; font-weight: 500; line-height: 1.25; }
+@utility text-h3 { font-size: 18px; font-weight: 500; line-height: 1.3; }
+@utility text-body { font-size: 16px; font-weight: 400; line-height: 1.5; }
+@utility text-small { font-size: 14px; font-weight: 400; line-height: 1.5; }
+@utility text-caption { font-size: 12px; font-weight: 500; line-height: 1.4; }
+/* Fraunces editorial accent — seeker headlines only, never < ~28px (§7.1). */
+@utility font-editorial { font-family: var(--font-display); }
+
+/* Focus ring (§5.6): 2px ember-500 ring at 2px offset, NEVER removed. */
+@utility focus-ember {
+  outline: none;
+}
+.focus-ember:focus-visible,
+a:focus-visible, button:focus-visible,
+input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--ember-500);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Reduced-motion global damp (§9): kill non-essential transitions/animation for
+   users who ask for it; the aperture already renders at-rest (see §6 block). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================================

@@ -31,6 +31,7 @@ frontend/dist/
 # Data artifacts (keep folder structure via .gitkeep, ignore contents)
 data/raw/*
 data/processed/*
+backend/data/
 data/ground_truth/*
 !data/**/.gitkeep
 # ...but DO version-control the ground-truth methodology + reconciled dataset
@@ -38,6 +39,12 @@ data/ground_truth/*
 !data/ground_truth/RUBRIC.md
 !data/ground_truth/SELECTION_PROCEDURE.md
 !data/ground_truth/ground_truth_dataset.json
+!data/ground_truth/EVALUATION_METHODOLOGY_DRAFT.md
+# Rater instructions are methodology too, but live beside the (ignored) blind
+# sheets. Re-enter that dir, keep the raw ratings_*.csv ignored, track only the doc.
+!data/ground_truth/rating_sheets/
+data/ground_truth/rating_sheets/*
+!data/ground_truth/rating_sheets/rater_instructions.md
 
 # OS / editor
 .DS_Store

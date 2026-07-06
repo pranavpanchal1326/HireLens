@@ -27,6 +27,9 @@ export default function ApertureBloom({
   score = 0,
   confidence = 0, // 0-1 (scoring_confidence)
   confidenceBand = 'low',
+  heading = null,      // optional section label; omit for the bare hero glyph
+  showLegend = true,   // per-feature legend under the bloom (§10.8)
+  showLabel = true,    // confidence label; suppress when used purely as a loader
 }) {
   if (!featureVector) return null;
 
@@ -39,9 +42,11 @@ export default function ApertureBloom({
 
   return (
     <div className="w-full flex flex-col items-center justify-center p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4 self-start">
-        Aperture-Bloom Alignment Signature
-      </h3>
+      {heading && (
+        <h3 className="text-caption uppercase tracking-wider text-muted mb-4 self-start">
+          {heading}
+        </h3>
+      )}
 
       <svg
         viewBox="0 0 220 236"
@@ -112,20 +117,24 @@ export default function ApertureBloom({
         </text>
       </svg>
 
-      {/* Confidence label (§6.3) — honest, band-specific. */}
-      <p className="text-[11px] font-medium mt-1 text-center" style={{ color: visuals.ring }}>
-        {visuals.label}
-      </p>
+      {/* Confidence label (§6.3) — honest, band-specific. Suppressed in loader use. */}
+      {showLabel && (
+        <p className="text-[11px] font-medium mt-1 text-center" style={{ color: visuals.ring }}>
+          {visuals.label}
+        </p>
+      )}
 
       {/* Per-feature legend (explainability, §10.8). */}
-      <div className="mt-3 grid grid-cols-5 gap-2 w-full text-center text-[10px] text-muted">
-        {petals.map((p) => (
-          <div key={p.key}>
-            <span className="block tabular-nums text-sm text-ink font-bold">{Math.round(p.value * 100)}%</span>
-            <span className="capitalize">{FEATURE_LABELS[p.key]}</span>
-          </div>
-        ))}
-      </div>
+      {showLegend && (
+        <div className="mt-3 grid grid-cols-5 gap-2 w-full text-center text-[10px] text-muted">
+          {petals.map((p) => (
+            <div key={p.key}>
+              <span className="block tabular-nums text-sm text-ink font-bold">{Math.round(p.value * 100)}%</span>
+              <span className="capitalize">{FEATURE_LABELS[p.key]}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
