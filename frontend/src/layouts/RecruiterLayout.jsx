@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, ListOrdered, Activity, LogOut, Lock } from 'lucide-react';
+import { LayoutGrid, ListOrdered, Activity, LogOut, Lock, ArrowLeft } from 'lucide-react';
 import BrandMark from '../components/BrandMark';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -32,11 +32,22 @@ function RecruiterShell() {
     <div data-density="recruiter" className="min-h-screen bg-canvas text-ink flex flex-col">
       <header className="sticky top-0 z-30" style={{ background: 'var(--slate-700)' }}>
         <div className="max-w-[1280px] mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/recruiter/ranked" className="flex items-center gap-2.5">
-            <BrandMark size={26} onDark />
-            <span className="text-h3 text-white/95">HireLens</span>
-            <span className="text-caption text-white/55 border-l border-white/20 pl-2.5 ml-1">Recruiter</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-caption text-white/60 hover:text-white transition-colors mr-1"
+              title="Back to Landing Page"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Back</span>
+            </Link>
+            <div className="h-4 w-px bg-white/20 hidden sm:block mr-1" />
+            <Link to="/recruiter/ranked" className="flex items-center gap-2.5">
+              <BrandMark size={26} onDark />
+              <span className="text-h3 text-white/95">HireLens</span>
+              <span className="text-caption text-white/55 border-l border-white/20 pl-2.5 ml-1">Recruiter</span>
+            </Link>
+          </div>
           {isAuthed && (
             <nav className="flex items-center gap-0.5 sm:gap-1">
               {nav.map(({ to, label, icon: Icon }) => (

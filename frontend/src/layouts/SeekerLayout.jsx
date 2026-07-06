@@ -1,5 +1,5 @@
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
-import { Sparkles, RefreshCw, HeartPulse, ShieldCheck } from 'lucide-react';
+import { Sparkles, RefreshCw, HeartPulse, ShieldCheck, ArrowLeft } from 'lucide-react';
 import BrandMark from '../components/BrandMark';
 import ModeToggle from '../components/ModeToggle';
 import { AnalysisProvider } from '../seeker/AnalysisContext';
@@ -20,10 +20,21 @@ export default function SeekerLayout() {
     <div data-density="seeker" className="min-h-screen bg-canvas text-ink flex flex-col">
       <header className="border-b border-border bg-surface/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/seeker/analyze" className="flex items-center gap-2.5">
-            <BrandMark size={30} />
-            <span className="text-h3 font-editorial text-ink">HireLens</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-caption text-muted hover:text-ink transition-colors mr-1"
+              title="Back to Landing Page"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Back</span>
+            </Link>
+            <div className="h-4 w-px bg-border hidden sm:block mr-1" />
+            <Link to="/seeker/analyze" className="flex items-center gap-2.5">
+              <BrandMark size={30} />
+              <span className="text-h3 font-editorial text-ink">HireLens</span>
+            </Link>
+          </div>
           {/* Nav collapses to icon-only below md so it stays usable on mobile
               (never disappears — §16). Labels return at md+. */}
           <nav className="flex items-center gap-0.5 sm:gap-1">
