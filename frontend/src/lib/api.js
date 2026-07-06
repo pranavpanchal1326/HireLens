@@ -32,13 +32,9 @@ client.interceptors.request.use((config) => {
 export function humanizeError(err) {
   if (err?.response) {
     const { status, data } = err.response;
-    if (status === 429 && data?.reason === 'FREEMIUM_LIMIT_REACHED') {
-      return {
-        kind: 'freemium',
-        message: "You've used your 3 free scans this month.",
-        remaining: data.remaining ?? 0,
-        resetsAt: data.resets_at || null,
-      };
+    if (status === 429) {
+      // No freemium cap anymore; a 429 would only come from generic throttling.
+      return { kind: 'rate', message: 'A lot of requests just now — please try again in a moment.' };
     }
     if (status === 401) {
       return { kind: 'auth', message: "Those recruiter credentials didn't match. Please sign in again." };

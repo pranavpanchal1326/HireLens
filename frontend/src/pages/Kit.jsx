@@ -52,7 +52,7 @@ export default function Kit() {
 
         {/* ── Signature · hero tier ────────────────────────────────────────── */}
         <SectionTitle
-          title="Signature — hero tier (§6)"
+          title="Signature — hero tier"
           action={
             <button
               onClick={() => setReplay((r) => r + 1)}
@@ -77,7 +77,7 @@ export default function Kit() {
         </div>
 
         {/* ── Signature · micro tier ───────────────────────────────────────── */}
-        <SectionTitle title="Signature — micro tier (§6.4, recruiter lists)" />
+        <SectionTitle title="Signature — micro tier (recruiter lists)" />
         <div className="rounded-2xl border border-border bg-surface p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
           <div className="flex flex-wrap items-center gap-8">
             {Object.entries(SAMPLES).map(([k, s]) => (
@@ -96,7 +96,7 @@ export default function Kit() {
         </div>
 
         {/* ── Buttons (§10.1) ──────────────────────────────────────────────── */}
-        <SectionTitle title="Buttons (§10.1)" />
+        <SectionTitle title="Buttons" />
         <Card>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary">Analyze fit</Button>
@@ -109,7 +109,7 @@ export default function Kit() {
         </Card>
 
         {/* ── Chips (§10.4 / §10.6) ────────────────────────────────────────── */}
-        <SectionTitle title="Skill chips — matched · missing · present · semantic ≈ (§10.4/§10.6)" />
+        <SectionTitle title="Skill chips — matched · missing · present · semantic ≈" />
         <Card>
           <div className="flex flex-wrap gap-2">
             <Chip kind="matched">Python</Chip>
@@ -126,7 +126,7 @@ export default function Kit() {
         </Card>
 
         {/* ── Inputs (§10.2) ───────────────────────────────────────────────── */}
-        <SectionTitle title="Inputs (§10.2)" />
+        <SectionTitle title="Inputs" />
         <Card>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Input id="k-role" label="Target role" placeholder="e.g. Senior Backend Engineer" hint="16px text — never zooms on mobile." />
@@ -135,7 +135,7 @@ export default function Kit() {
         </Card>
 
         {/* ── Dual meters (§10.9) ──────────────────────────────────────────── */}
-        <SectionTitle title="Confidence meters — parsing vs scoring, never conflated (§10.9)" />
+        <SectionTitle title="Confidence meters — parsing vs scoring, never conflated" />
         <Card>
           <div className="flex flex-wrap gap-10">
             <ArcMeter value={0.92} tone="fit" label="Parsing confidence" sublabel="11/12 fields read" />
@@ -147,7 +147,7 @@ export default function Kit() {
         </Card>
 
         {/* ── Dropzone (§10.2) ─────────────────────────────────────────────── */}
-        <SectionTitle title="Resume dropzone — resting · parsing · parsed (§10.2)" />
+        <SectionTitle title="Resume dropzone — resting · parsing · parsed" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Dropzone onFile={() => {}} />
           <Dropzone onFile={() => {}} parsing />
@@ -158,7 +158,7 @@ export default function Kit() {
         </div>
 
         {/* ── States (§10.10) ──────────────────────────────────────────────── */}
-        <SectionTitle title="States — empty · loading · error · low-confidence (§10.10)" />
+        <SectionTitle title="States — empty · loading · error · low-confidence" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Card pad="none" className="overflow-hidden">
             <EmptyState

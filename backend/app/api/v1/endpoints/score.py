@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.api.v1.guardrails import validate_text_input
+from app.core.config import settings
 
 from app.schemas.parsing import ExtractionResult, ParsedJobDescription, ParsedResume
 from app.schemas.privacy import AnonymizationReport
@@ -67,7 +68,10 @@ def get_rate_limiter() -> FreemiumRateLimiter:
     if _RATE_LIMITER is None:
         repo_root = Path(__file__).resolve().parents[5]
         store_path = repo_root / "data" / "processed" / "freemium_scans.json"
-        _RATE_LIMITER = FreemiumRateLimiter(JSONFileScanStore(store_path))
+        # Limit sourced from config; default 0 = unlimited (freemium cap removed).
+        _RATE_LIMITER = FreemiumRateLimiter(
+            JSONFileScanStore(store_path), limit=settings.FREEMIUM_SCAN_LIMIT
+        )
     return _RATE_LIMITER
 
 

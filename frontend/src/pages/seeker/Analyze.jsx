@@ -155,7 +155,7 @@ export default function Analyze() {
         >
           {status === 'scoring' ? 'Bringing your fit into focus…' : 'Analyze fit'}
         </Button>
-        <p className="text-caption text-muted text-center">Free · 3 scans a month · resumes aren't stored beyond your session</p>
+        <p className="text-caption text-muted text-center">Free to use · resumes aren't stored beyond your session</p>
       </section>
 
       {/* ── Result column ────────────────────────────────────────────────── */}
@@ -168,7 +168,7 @@ export default function Analyze() {
           ) : status === 'error' ? (
             <div className="flex-1 flex items-center justify-center">
               <ErrorState
-                title={error?.kind === 'freemium' ? 'That was your last free scan this month' : "We couldn't score this clearly"}
+                title="We couldn't score this clearly"
                 body={error?.message}
               />
             </div>

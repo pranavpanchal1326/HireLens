@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # Database connection string. Defaults to a local SQLite file for zero-setup dev.
     DATABASE_URL: str = "sqlite:///./hirelens.db"
 
+    # Freemium scan cap for the anonymous seeker /score path. 0 (or negative) means
+    # UNLIMITED — the default: there is no scan limit. Set a positive integer to
+    # re-enable a freemium tier without code changes.
+    FREEMIUM_SCAN_LIMIT: int = 0
+
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

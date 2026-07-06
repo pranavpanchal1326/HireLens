@@ -75,6 +75,19 @@ All notable changes to HireLens are documented here. This project follows the
   §18 governance). Motion budget respected — expressive motion only on the score reveal.
   Sentence-case, forward-looking voice throughout (§12).
 
+### Changed
+- Removed the freemium scan cap. The anonymous seeker `/score` path is now unlimited
+  by default via a new `FREEMIUM_SCAN_LIMIT` setting (0 = unlimited); the limiter code
+  and tests are retained so a paid tier can be re-enabled without code changes. All
+  "3 scans a month" UI copy removed from the landing and analyze screens.
+- Removed internal `(§x.y)` blueprint section references from user-visible `/kit` titles
+  (kept in code comments as documentation).
+
+### Added
+- Frontend test suite (Vitest + Testing Library): 22 tests across ranking utils,
+  resume-health heuristics, aperture confidence bands, API error humanization, and a
+  Chip component render — closing the prior zero-frontend-test gap. `npm test` to run.
+
 ### Fixed
 - Explainability "Copy note" failed silently in contexts where the async Clipboard API
   is blocked (sandboxed iframes, unfocused windows) — the catch swallowed the error and

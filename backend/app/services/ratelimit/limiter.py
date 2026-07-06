@@ -66,6 +66,13 @@ class FreemiumRateLimiter:
         deterministically.
         """
         now = now or datetime.now(UTC)
+
+        # Unlimited mode: a non-positive limit disables the freemium cap entirely
+        # (product decision — no scan limit). We still return a valid result so the
+        # endpoint contract is unchanged; nothing is ever denied.
+        if self._limit <= 0:
+            return RateLimitResult(allowed=True, remaining=-1, resets_at=now + self._window)
+
         record = self._store.get(anon_id)
 
         # New identifier, or the previous window has fully elapsed → fresh window.

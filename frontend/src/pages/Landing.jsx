@@ -55,7 +55,7 @@ export default function Landing() {
       </div>
 
       <p className="relative z-10 text-caption text-muted mt-12">
-        Free to try · 3 scans a month, stated plainly · no dark patterns
+        Free to use · resumes read for your session only · every score shows its reasoning
       </p>
     </div>
   );
