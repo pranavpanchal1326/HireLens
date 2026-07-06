@@ -51,3 +51,4 @@ data/ground_truth/rating_sheets/*
 Thumbs.db
 .idea/
 .vscode/
+.claude/
