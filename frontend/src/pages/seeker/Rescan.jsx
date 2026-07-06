@@ -102,13 +102,15 @@ export default function Rescan() {
               )}
 
               {/* Current bloom. */}
-              <div className="rounded-[var(--card-radius)] bg-canvas border border-border mt-4">
+              <div className="rounded-[var(--card-radius)] bg-sunken border border-border mt-4">
                 <ApertureBloom
                   featureVector={latest.feature_vector}
                   score={latest.score}
                   confidence={latest.scoring_confidence}
                   confidenceBand={latest.confidence_level}
                   showLegend={false}
+                  alive
+                  rings
                 />
               </div>
 
@@ -165,7 +167,7 @@ function MomentumTrail({ history }) {
       <div className="flex items-center gap-2 flex-wrap">
         {history.map((h, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-small tabular-nums font-medium text-ink bg-canvas border border-border rounded-md px-2 py-1">
+            <span className="text-small tabular-nums font-medium text-ink bg-sunken border border-border rounded-md px-2 py-1">
               {h.score}
             </span>
             {i < history.length - 1 && <ArrowRight className="w-3.5 h-3.5 text-muted" />}

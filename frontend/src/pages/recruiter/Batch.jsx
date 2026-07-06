@@ -84,7 +84,7 @@ export default function Batch() {
         {rows.map((r, i) => (
           <Card key={r.id} pad="sm">
             <div className="flex items-start gap-3">
-              <span className="w-7 h-7 rounded-md bg-canvas border border-border text-muted text-caption font-semibold tabular-nums flex items-center justify-center shrink-0 mt-1">
+              <span className="w-7 h-7 rounded-md bg-sunken border border-border text-muted text-caption font-semibold tabular-nums flex items-center justify-center shrink-0 mt-1">
                 {i + 1}
               </span>
               <div className="flex-1 space-y-2">

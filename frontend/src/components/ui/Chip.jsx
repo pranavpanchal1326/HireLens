@@ -6,7 +6,7 @@ import { Check, Plus, Minus } from 'lucide-react';
 const KIND = {
   matched:  { cls: 'bg-fit-fill text-fit-text',       Icon: Check },
   missing:  { cls: 'bg-gap-fill text-gap-text',        Icon: Plus },   // "add this", a to-do not a failure
-  present:  { cls: 'bg-canvas text-muted border border-border', Icon: Minus },
+  present:  { cls: 'bg-sunken text-muted border border-border', Icon: Minus },
   semantic: { cls: 'bg-fit-fill text-fit-text',        Icon: null },   // shows a ≈ glyph
 };
 

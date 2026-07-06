@@ -132,7 +132,7 @@ export default function Analyze() {
           role="switch"
           aria-checked={blindMode}
           onClick={() => setBlindMode((b) => !b)}
-          className="w-full flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5 text-left focus-ember hover:bg-canvas transition-colors"
+          className="w-full flex items-center gap-3 rounded-xl border border-border bg-surface p-3.5 text-left focus-ember hover:bg-sunken transition-colors"
         >
           <span className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${blindMode ? 'bg-ember-500' : 'bg-border'}`}>
             <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${blindMode ? 'left-4.5' : 'left-0.5'}`} />
@@ -193,12 +193,14 @@ function ResultView({ result, maturity, suggestions, onRescan }) {
   return (
     <div className="flex-1 flex flex-col animate-[slide-up_var(--dur-base)_var(--ease-settle)]">
       {/* Hero bloom — the signature reveal. */}
-      <div className="rounded-[var(--card-radius)] bg-canvas border border-border">
+      <div className="rounded-[var(--card-radius)] bg-sunken border border-border">
         <ApertureBloom
           featureVector={result.feature_vector}
           score={result.final_score}
           confidence={result.scoring_confidence}
           confidenceBand={result.confidence_level}
+          alive
+          rings
         />
       </div>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { bandVisuals, toPetals, strongestFeature, FEATURE_LABELS } from '../lib/apertureConfidence';
+import ApertureRings from './ApertureRings';
 
 // Design Blueprint §6 — the signature "aperture bloom". Five petals fan from a
 // central pupil (the score); a ring reports confidence. Petals are the model's
@@ -30,6 +31,8 @@ export default function ApertureBloom({
   heading = null,      // optional section label; omit for the bare hero glyph
   showLegend = true,   // per-feature legend under the bloom (§10.8)
   showLabel = true,    // confidence label; suppress when used purely as a loader
+  alive = false,       // living bloom: breathes at rest + casts an ember glow (hero use)
+  rings = false,       // concentric aperture focus-scale backdrop (hero result contexts)
 }) {
   if (!featureVector) return null;
 
@@ -41,13 +44,30 @@ export default function ApertureBloom({
   const srLabel = `Fit score ${score}, ${visuals.label.toLowerCase()}, strongest in ${strongestFeature(featureVector)}.`;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center p-4">
+    <div className={`w-full flex flex-col items-center justify-center p-4 ${alive ? 'ab-alive' : ''}`}>
       {heading && (
         <h3 className="text-caption uppercase tracking-wider text-muted mb-4 self-start">
           {heading}
         </h3>
       )}
 
+      <div className="relative">
+        {/* Optical focus-scale backdrop — the lens motif behind the bloom. */}
+        {rings && (
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2 -z-10"
+            style={{ width: 320, height: 320, maxWidth: '150%' }}>
+            <ApertureRings />
+          </div>
+        )}
+        {/* The one warm light — a soft ember glow the bloom sits inside (§4). */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background: 'radial-gradient(circle at 50% 46%, rgba(232,90,44,calc(var(--glow-strength) * 1.3)), transparent 60%)',
+            filter: 'blur(18px)',
+          }}
+        />
       <svg
         viewBox="0 0 220 236"
         width="220"
@@ -59,7 +79,7 @@ export default function ApertureBloom({
         <title>{srLabel}</title>
 
         {/* Petals — the live feature vector. */}
-        <g className="ab-petals">
+        <g className={`ab-petals ${alive ? 'ab-breathe' : ''}`}>
           {petals.map((p, k) => (
             <path
               key={p.key}
@@ -116,6 +136,7 @@ export default function ApertureBloom({
           {score}
         </text>
       </svg>
+      </div>
 
       {/* Confidence label (§6.3) — honest, band-specific. Suppressed in loader use. */}
       {showLabel && (

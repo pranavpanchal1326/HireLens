@@ -62,11 +62,11 @@ export default function ExplainabilityPanel({ candidate, displayName, onClose })
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={`Explainability for ${displayName}`}>
       <div className="absolute inset-0 bg-black/25 animate-[fade-in_var(--dur-fast)_var(--ease-settle)]" onClick={onClose} />
       <aside
-        data-theme="recruiter"
-        className="relative w-full max-w-[480px] bg-canvas h-full overflow-y-auto shadow-[var(--shadow-md)] animate-[slide-in_var(--dur-base)_var(--ease-settle)]"
+        data-density="recruiter"
+        className="relative w-full max-w-[480px] bg-surface h-full overflow-y-auto shadow-[var(--shadow-md)] animate-[slide-in_var(--dur-base)_var(--ease-settle)]"
         style={{ animationName: 'slide-in' }}
       >
-        <div className="sticky top-0 bg-canvas/95 backdrop-blur border-b border-border px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-surface/95 backdrop-blur border-b border-border px-6 py-4 flex items-center justify-between z-10">
           <div>
             <p className="text-caption uppercase tracking-wider text-muted">Rank #{candidate.rank}</p>
             <h2 className="text-h3 text-ink">{displayName}</h2>
@@ -85,6 +85,8 @@ export default function ExplainabilityPanel({ candidate, displayName, onClose })
               confidence={sr.scoring_confidence}
               confidenceBand={sr.confidence_level}
               showLegend={false}
+              alive
+              rings
             />
           </div>
 

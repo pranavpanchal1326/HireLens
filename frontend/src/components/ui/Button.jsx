@@ -6,7 +6,7 @@ const VARIANTS = {
     'bg-ember-500 text-white hover:brightness-[0.94] shadow-sm disabled:bg-border disabled:text-muted disabled:shadow-none',
   // Secondary: surface fill + border + ink label.
   secondary:
-    'bg-surface text-ink border border-border hover:bg-canvas disabled:text-muted',
+    'bg-surface text-ink border border-border hover:bg-sunken disabled:text-muted',
   // Ghost: no fill, ember-700 label — low-emphasis inline actions.
   ghost:
     'bg-transparent text-ember-700 hover:bg-ember-50 disabled:text-muted',
@@ -35,7 +35,7 @@ export default function Button({
     <button
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus-ember ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus-ember active:scale-[0.97] ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
       {loading ? (

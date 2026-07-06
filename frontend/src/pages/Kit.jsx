@@ -38,7 +38,7 @@ export default function Kit() {
   const [replay, setReplay] = useState(0);
 
   return (
-    <div data-theme="seeker" className="min-h-screen bg-canvas text-ink">
+    <div data-density="seeker" className="min-h-screen bg-canvas text-ink">
       <div className="max-w-[1120px] mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-2">
           <p className="text-caption uppercase tracking-wider text-muted">Design system · living reference</p>

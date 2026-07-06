@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Outlet, NavLink, Link } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { LayoutGrid, ListOrdered, Activity, LogOut, Lock } from 'lucide-react';
 import BrandMark from '../components/BrandMark';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { Input } from '../components/ui/Field';
+import ModeToggle from '../components/ModeToggle';
 import { RecruiterProvider, useRecruiter } from '../recruiter/RecruiterContext';
 
 // Recruiter chrome (§4): cool greige, dense, volume-first. Slate-anchored header
@@ -26,8 +27,9 @@ export default function RecruiterLayout() {
 
 function RecruiterShell() {
   const { isAuthed, signOut, auth } = useRecruiter();
+  const location = useLocation();
   return (
-    <div data-theme="recruiter" className="min-h-screen bg-canvas text-ink flex flex-col">
+    <div data-density="recruiter" className="min-h-screen bg-canvas text-ink flex flex-col">
       <header className="sticky top-0 z-30" style={{ background: 'var(--slate-700)' }}>
         <div className="max-w-[1280px] mx-auto px-6 h-14 flex items-center justify-between">
           <Link to="/recruiter/ranked" className="flex items-center gap-2.5">
@@ -54,7 +56,8 @@ function RecruiterShell() {
               ))}
             </nav>
           )}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ModeToggle onDark />
             {isAuthed && (
               <button onClick={signOut} className="flex items-center gap-1.5 text-caption text-white/70 hover:text-white transition-colors">
                 <LogOut className="w-3.5 h-3.5" /> {auth?.username}
@@ -66,7 +69,13 @@ function RecruiterShell() {
       </header>
 
       <main className="flex-1 w-full">
-        {isAuthed ? <Outlet /> : <RecruiterSignIn />}
+        {isAuthed ? (
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
+        ) : (
+          <RecruiterSignIn />
+        )}
       </main>
 
       <footer className="border-t border-border py-4">

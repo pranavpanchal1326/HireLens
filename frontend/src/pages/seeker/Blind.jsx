@@ -87,7 +87,7 @@ export default function Blind() {
         </Button>
 
         {/* Data retention (§13) — plain language, always present. */}
-        <div className="flex gap-2.5 rounded-[var(--card-radius)] bg-canvas border border-border p-4">
+        <div className="flex gap-2.5 rounded-[var(--card-radius)] bg-sunken border border-border p-4">
           <Trash2 className="w-4 h-4 text-muted shrink-0 mt-0.5" />
           <p className="text-caption text-muted leading-relaxed">
             <span className="text-ink font-medium">Your data isn't stored.</span> Resumes are read for
@@ -127,7 +127,7 @@ function BiasResult({ openScore, blindResult, delta }) {
     <div className="flex-1 flex flex-col">
       {/* Open vs blind scores. */}
       <h3 className="text-h3 text-ink mb-3">Open vs. blind score</h3>
-      <div className="flex items-center justify-center gap-5 rounded-[var(--card-radius)] bg-canvas border border-border p-5">
+      <div className="flex items-center justify-center gap-5 rounded-[var(--card-radius)] bg-sunken border border-border p-5">
         <div className="text-center">
           <p className="text-display tabular-nums text-ink" style={{ fontFamily: 'var(--font-sans)', fontSize: 40 }}>{openScore}</p>
           <p className="text-caption text-muted">with identity</p>
@@ -168,7 +168,7 @@ function BiasResult({ openScore, blindResult, delta }) {
                 <div className="flex-1">
                   <p className="text-small font-medium text-ink">{meta.label}</p>
                   <p className="text-caption text-muted">
-                    Replaced with <span className="font-mono bg-canvas rounded px-1">{item.replaced_with}</span>
+                    Replaced with <span className="font-mono bg-sunken rounded px-1">{item.replaced_with}</span>
                     {item.occurrences > 1 && ` · ${item.occurrences}×`}
                   </p>
                 </div>

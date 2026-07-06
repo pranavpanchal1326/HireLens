@@ -1,6 +1,7 @@
-import { Outlet, NavLink, Link } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { Sparkles, RefreshCw, HeartPulse, ShieldCheck } from 'lucide-react';
 import BrandMark from '../components/BrandMark';
+import ModeToggle from '../components/ModeToggle';
 import { AnalysisProvider } from '../seeker/AnalysisContext';
 
 // Seeker chrome (§4): warm, spacious, encouraging. Single-column reading width,
@@ -13,10 +14,10 @@ const nav = [
 ];
 
 export default function SeekerLayout() {
+  const location = useLocation();
   return (
-    // §4: this subtree IS the seeker temperament — scope data-theme here so every
-    // CSS variable below (canvas/surface/ink/radii) resolves to the warm side.
-    <div data-theme="seeker" className="min-h-screen bg-canvas text-ink flex flex-col">
+    // Seeker RHYTHM (rounder radii, spacious); the light/dark ROOM lives on <html>.
+    <div data-density="seeker" className="min-h-screen bg-canvas text-ink flex flex-col">
       <header className="border-b border-border bg-surface/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/seeker/analyze" className="flex items-center gap-2.5">
@@ -35,7 +36,7 @@ export default function SeekerLayout() {
                   `flex items-center gap-1.5 px-2.5 sm:px-3 h-11 rounded-md text-small font-medium transition-colors duration-200 ${
                     isActive
                       ? 'bg-ember-50 text-ember-700'
-                      : 'text-muted hover:text-ink hover:bg-canvas'
+                      : 'text-muted hover:text-ink hover:bg-sunken'
                   }`
                 }
               >
@@ -44,12 +45,15 @@ export default function SeekerLayout() {
               </NavLink>
             ))}
           </nav>
-          <Link
-            to="/recruiter"
-            className="hidden sm:block text-caption text-muted hover:text-ink transition-colors"
-          >
-            I'm a recruiter →
-          </Link>
+          <div className="flex items-center gap-1">
+            <ModeToggle />
+            <Link
+              to="/recruiter"
+              className="hidden sm:block text-caption text-muted hover:text-ink transition-colors pl-2"
+            >
+              I'm a recruiter →
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -58,7 +62,9 @@ export default function SeekerLayout() {
           seeker screens (Analyze ↔ Rescan). */}
       <main className="flex-1 w-full">
         <AnalysisProvider>
-          <Outlet />
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
         </AnalysisProvider>
       </main>
 

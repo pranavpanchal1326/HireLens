@@ -65,7 +65,7 @@ export default function Dropzone({
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
       className={`rounded-[var(--r-xl)] border-2 border-dashed p-8 text-center cursor-pointer transition-colors duration-200 focus-ember ${
-        dragging ? 'border-ember-300 bg-ember-50' : 'border-border bg-surface hover:bg-canvas'
+        dragging ? 'border-ember-300 bg-ember-50' : 'border-border bg-surface hover:bg-sunken'
       }`}
     >
       <span className="w-12 h-12 mx-auto rounded-2xl bg-ember-50 text-ember-700 flex items-center justify-center mb-3">

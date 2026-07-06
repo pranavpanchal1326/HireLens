@@ -6,6 +6,34 @@ All notable changes to HireLens are documented here. This project follows the
 ## [Unreleased]
 
 ### Added
+- **"Into Focus" design system v2.0** — full UI redesign. The warm cream/greige palette
+  is replaced by a monochrome **light ("Lightbox") + dark ("Darkroom") system** with a
+  header toggle (persisted, honors OS on first visit); Ember and the aperture bloom are
+  now the *only* color. Re-architected the token spine onto two axes — `data-mode`
+  (light/dark room) and `data-density` (seeker/recruiter rhythm) — keeping every token
+  name so all components and tests carried over unchanged. Semantics remapped to the
+  monochrome language: present/matched = Ember, gap = graphite, uncertain = grey-teal.
+  Added atmosphere layers — film grain (`body::before`), a pointer-following **cursor-light**
+  pool (`lib/atmosphere.js`, rAF lerp; no-ops on touch/reduced-motion), and volumetric
+  Ember glow. The aperture bloom now **breathes** and casts a warm glow (`alive`). New
+  **cinematic landing** — focus-pull headline reveal, living hero bloom, product tease,
+  two-door section, the "you're not a keyword" human beat, and a how-it-works section.
+  New `focus-pull` / `develop` / `breathe` keyframes. WCAG AA re-audited on the new palette
+  (all pairs pass comfortably; the old muted-on-canvas borderline is now resolved).
+- **"Into Focus" polish pass** — light mode is now a *true white* (`#FFFFFF`) page, not the
+  faintly-warm off-white; introduced a cool `--sunken` token so inset wells keep depth on
+  pure white (all `bg-canvas` wells re-pointed to `bg-sunken`), with cooler neutrals.
+  Added artful optical detail: a concentric **aperture-ring focus-scale** backdrop behind
+  the hero bloom (`ApertureRings`, settles once then holds still — no perpetual motion),
+  and a scroll-reveal system (`Reveal`) so sections rise and resolve as they enter view
+  (fade+lift only; text never blurs).
+- **"Into Focus" slick pass** — polish across every screen: the aperture-ring backdrop
+  now appears behind the seeker result, rescan, and recruiter explainability blooms
+  (subtle in-app, loud on the landing); `page-enter` fade+rise on every route change;
+  smooth hover-lift on interactive cards (`lift` utility, ranked cards) and border-warm;
+  button press feedback (`active:scale`); Ember text selection; smooth anchor scrolling
+  and antialiased text. All motion respects `prefers-reduced-motion`; nothing degrades
+  legibility (P1) and no perpetual background animation (motion budget, §9).
 - Phase 0.1: Repo scaffold, environment config, and CI-ready test harness established.
 - Phase D1 (Design Blueprint): React Router shell with `/seeker/*` and `/recruiter/*`
   subtrees, each scoping `data-theme` so the two temperaments (§4) resolve from one

@@ -82,9 +82,9 @@ export default function Ranked() {
               <div key={key} className="flex items-center gap-2">
                 <span className="text-caption text-muted w-16">{label}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => setW(key, (weights[key] ?? 1) - 0.5)} className="w-6 h-6 rounded bg-canvas border border-border text-muted hover:text-ink focus-ember">−</button>
+                  <button onClick={() => setW(key, (weights[key] ?? 1) - 0.5)} className="w-6 h-6 rounded bg-sunken border border-border text-muted hover:text-ink focus-ember">−</button>
                   <span className="text-small tabular-nums w-8 text-center text-ink">{(weights[key] ?? 1).toFixed(1)}×</span>
-                  <button onClick={() => setW(key, (weights[key] ?? 1) + 0.5)} className="w-6 h-6 rounded bg-canvas border border-border text-muted hover:text-ink focus-ember">+</button>
+                  <button onClick={() => setW(key, (weights[key] ?? 1) + 0.5)} className="w-6 h-6 rounded bg-sunken border border-border text-muted hover:text-ink focus-ember">+</button>
                 </div>
               </div>
             ))}
@@ -99,7 +99,7 @@ export default function Ranked() {
           const sr = c.score_result;
           const drivers = topDrivers(sr.feature_vector, weights, 2);
           return (
-            <Card key={c.candidate_id + i} pad="sm" as="button"
+            <Card key={c.candidate_id + i} pad="sm" as="button" interactive
               className="w-full text-left flex items-center gap-3"
               onClick={() => setOpen({ ...c, _name: displayNameFor(c, i) })}
             >
@@ -151,7 +151,7 @@ export default function Ranked() {
                   <Td>
                     <span className="flex flex-wrap gap-1">
                       {drivers.map((d) => (
-                        <span key={d.key} className="capitalize text-caption bg-canvas border border-border rounded-full px-2 py-0.5 text-muted">
+                        <span key={d.key} className="capitalize text-caption bg-sunken border border-border rounded-full px-2 py-0.5 text-muted">
                           {d.label} {Math.round(d.value * 100)}%
                         </span>
                       ))}

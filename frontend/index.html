@@ -1,16 +1,28 @@
 <!doctype html>
-<html lang="en" data-theme="seeker">
+<html lang="en" data-mode="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HireLens — AI Resume Intelligence</title>
+    <title>HireLens — See your fit come into focus</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&display=swap" rel="stylesheet">
+    <!-- Set the room before paint to avoid a flash (light default, honors saved choice / OS). -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('hirelens_mode');
+          var mode = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-mode', mode);
+        } catch (e) { document.documentElement.setAttribute('data-mode', 'light'); }
+      })();
+    </script>
   </head>
-  <body class="bg-canvas text-ink min-h-screen">
+  <body class="min-h-screen">
+    <!-- Atmosphere: film grain (body::before) + the cursor-light pool. -->
+    <div id="cursor-light"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

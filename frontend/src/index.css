@@ -1,52 +1,81 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   HireLens Design Token Spine (Design Blueprint §5.7 / §7 / §17)
-   Installed verbatim per Phase R1. Do not alter these values.
-   Two themes (seeker/recruiter) are semantic layers on ONE token spine: they
-   share variable NAMES with different VALUES, so component code never branches
-   on theme — it reads the current CSS variable.
+   HireLens — "Into Focus" Design System v2.0
+   ----------------------------------------------------------------------------
+   Two axes, one spine:
+     • data-mode  = light ("Lightbox") | dark ("Darkroom")  → the ROOM (color)
+     • data-density = seeker | recruiter                    → the RHYTHM (radius)
+   Component code never branches on either; it reads the resolved CSS variable.
+   The world is graphite + paper; Ember and the aperture bloom are the ONLY color.
    ============================================================================ */
+
 :root {
+  /* Ember — the one color (shared across both rooms). */
   --ember-50:#FEEDE7; --ember-100:#FBD3C6; --ember-300:#F2896A;
-  --ember-500:#E85A2C; --ember-700:#A6330F; --ember-score:#C7431A;
-  --slate-700:#33534F; --slate-400:#5C7A75;
-  --fit-fill:#E4EFE7; --fit-500:#2C8C5E; --fit-text:#1C6B45;
-  --gap-fill:#FAEBD3; --gap-500:#D98A2B; --gap-text:#8A5410;
-  --lowconf-fill:#E4EAE8; --lowconf-500:#8C9A97; --lowconf-text:#3E524F;
+  --ember-500:#E85A2C; --ember-700:#A6330F; --ember-glow:#FF6B3D; --ember-score:#C7431A;
+
+  /* Graphite structural tone (recruiter chrome) — was slate; now near-black. */
+  --slate-700:#202024; --slate-400:#6B6B70;
+
+  /* Radii · spacing · motion (stable across modes). */
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-pill:999px;
-  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px;
-  --shadow-sm:0 2px 8px rgba(42,33,28,.06);
-  --shadow-md:0 12px 32px rgba(42,33,28,.08);
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px; --s-16:64px;
   --ease-settle:cubic-bezier(.22,1,.36,1);
-  --dur-fast:200ms; --dur-base:320ms; --dur-reveal:560ms;
-}
-[data-theme="seeker"] {
-  --canvas:#FBF5EF; --surface:#FFFFFF; --ink:#2A211C;
-  --muted:#7C6F66; --border:#EFE4D8; --card-radius:var(--r-lg);
-}
-[data-theme="recruiter"] {
-  --canvas:#F3F0EA; --surface:#FCFBF8; --ink:#23201C;
-  --muted:#6E6A62; --border:#E3DED5; --card-radius:var(--r-md);
+  --ease-focus:cubic-bezier(.16,1,.3,1);
+  --dur-fast:200ms; --dur-base:320ms; --dur-slow:560ms; --dur-cinematic:900ms; --dur-reveal:1400ms;
+
+  /* Cursor-light position (updated by JS; centered until the pointer moves). */
+  --mx:50%; --my:35%;
 }
 
+/* ── Lightbox (light, default) — a TRUE white page, cool neutrals ─────────── */
+:root, [data-mode="light"] {
+  --canvas:#FFFFFF; --surface:#FFFFFF; --sunken:#F4F4F6; --ink:#0A0A0B; --muted:#6E6E76;
+  --border:#E7E7EA; --veil:rgba(10,10,12,.035);
+  /* Semantic: present = Ember, gap = graphite, uncertain = grey-teal (§3.4). */
+  --fit-fill:#FEEDE7; --fit-500:#E85A2C; --fit-text:#A6330F;
+  --gap-fill:#F0F0F2; --gap-500:#6E6E76; --gap-text:#46464B;
+  --lowconf-fill:#E9ECEB; --lowconf-500:#8C9A97; --lowconf-text:#3E524F;
+  --shadow-sm:0 1px 2px rgba(10,10,12,.06), 0 10px 30px rgba(10,10,12,.06);
+  --shadow-md:0 2px 8px rgba(10,10,12,.07), 0 24px 60px rgba(10,10,12,.10);
+  --grain-opacity:.035; --glow-strength:.14;
+  color-scheme: light;
+}
+
+/* ── Darkroom (dark) ─────────────────────────────────────────────────────── */
+[data-mode="dark"] {
+  --canvas:#0B0B0D; --surface:#151517; --sunken:#0E0E11; --ink:#F4F4F2; --muted:#9A9AA0;
+  --border:#262629; --veil:rgba(255,255,255,.05);
+  --ember-score:#FF6B3D;  /* numerals glow like a safelight on film-black */
+  --fit-fill:rgba(232,90,44,.16); --fit-500:#FF6B3D; --fit-text:#FF8A5C;
+  --gap-fill:rgba(255,255,255,.06); --gap-500:#9A9AA0; --gap-text:#C3C3C9;
+  --lowconf-fill:rgba(140,154,151,.16); --lowconf-500:#A9BBB7; --lowconf-text:#C6D2CF;
+  --slate-700:#000000; --slate-400:#9A9AA0;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.45);
+  --shadow-md:0 2px 6px rgba(0,0,0,.55), 0 22px 60px rgba(0,0,0,.6);
+  --grain-opacity:.075; --glow-strength:.28;
+  color-scheme: dark;
+}
+
+/* ── Density (rhythm), set by the seeker/recruiter layouts ───────────────── */
+[data-density="seeker"]    { --card-radius:var(--r-lg); }
+[data-density="recruiter"] { --card-radius:var(--r-md); }
+:root { --card-radius:var(--r-lg); } /* sensible default */
+
 /* ============================================================================
-   Tailwind v4 @theme bridge — expose the token spine as native utilities so
-   components can use bg-ember-500, text-ink, bg-canvas, border-border, etc.
-   Semantic (theme-driven) colors reference the runtime vars above, so a single
-   utility resolves correctly under either data-theme.
+   Tailwind v4 @theme bridge — expose the spine as native utilities.
    ============================================================================ */
 @theme {
-  /* Typography (§7.1): Hanken Grotesk for all UI + numerals; Fraunces display only. */
   --font-sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 
-  /* Ember scale + semantic accent palettes (static). */
   --color-ember-50: var(--ember-50);
   --color-ember-100: var(--ember-100);
   --color-ember-300: var(--ember-300);
   --color-ember-500: var(--ember-500);
   --color-ember-700: var(--ember-700);
+  --color-ember-glow: var(--ember-glow);
   --color-ember-score: var(--ember-score);
   --color-slate-700: var(--slate-700);
   --color-slate-400: var(--slate-400);
@@ -60,68 +89,78 @@
   --color-lowconf-500: var(--lowconf-500);
   --color-lowconf-text: var(--lowconf-text);
 
-  /* Semantic theme-driven surfaces/text (resolve per data-theme). */
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-veil: var(--veil);
 
-  /* Radii (§17): map Tailwind rounded-* onto the blueprint scale. */
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
   --radius-xl: var(--r-xl);
   --radius-2xl: var(--r-xl);
 
-  /* Motion tokens. */
   --animate-fade-in: fade-in var(--dur-fast) var(--ease-settle);
   --animate-slide-up: slide-up var(--dur-base) var(--ease-settle);
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+/* Cinematic focus-pull: a decorative/hero element resolves from blur (§7). */
+@keyframes focus-pull {
+  from { filter: blur(24px); opacity: 0; transform: scale(1.04); }
+  to   { filter: blur(0);    opacity: 1; transform: scale(1); }
+}
+/* "Develop in the tray": a number surfaces from grain like a darkroom print. */
+@keyframes develop {
+  0%   { filter: blur(14px) brightness(.4) contrast(.6); opacity: 0; }
+  60%  { filter: blur(4px)  brightness(.8) contrast(.9); opacity: .85; }
+  100% { filter: blur(0)    brightness(1)  contrast(1);  opacity: 1; }
+}
+/* The living aperture: a slow, barely-there breath. */
+@keyframes breathe {
+  0%,100% { transform: scale(1) rotate(0deg); }
+  50%     { transform: scale(1.015) rotate(0.6deg); }
 }
 
-@keyframes slide-up {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* Focus-pull entrance — content resolves from blur on load (hero only, §7). */
+.reveal { animation: focus-pull 0.75s var(--ease-focus) both; }
+.reveal-slow { animation: focus-pull 1.1s var(--ease-focus) both; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-slow { animation: none; opacity: 1; filter: none; }
 }
 
-/* Slide-over panel entrance (recruiter explainability, §10.8). Settles, no bounce. */
-@keyframes slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
+/* Scroll-reveal — sections rise + resolve as they enter (text stays sharp: no blur). */
+.reveal-scroll { opacity: 0; transform: translateY(20px); transition: opacity .8s var(--ease-focus), transform .8s var(--ease-focus); }
+.reveal-scroll.reveal-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal-scroll { opacity: 1; transform: none; transition: none; } }
 
-/* Tabular numerals (§7.3): apply wherever scores/percentages/ranks render. */
-@utility tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
+/* Hero's concentric-aperture backdrop — a still optical motif that settles in once
+   on load (calm ethos: resolves and holds, never a perpetual screensaver, §9). */
+@keyframes rings-settle { from { opacity: 0; transform: scale(0.94) rotate(-6deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+.aperture-rings { transform-origin: center; animation: rings-settle 1.4s var(--ease-focus) both; }
+@media (prefers-reduced-motion: reduce) { .aperture-rings { animation: none; opacity: 1; } }
 
-/* ============================================================================
-   Typography scale (§7.2) as semantic utilities so screens never hardcode
-   sizes. Sentence case is a content rule (§7.3), enforced in copy not CSS.
-   Line-height 1.5 body / 1.2 display+score (§7.3).
-   ============================================================================ */
-@utility text-display {  /* hero headline / seeker landing */
-  font-family: var(--font-display);
-  font-size: 40px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;
-}
+/* Tabular numerals (§6): scores/percentages/ranks align, never jitter. */
+@utility tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Typography scale (§6). */
+@utility text-display { font-family: var(--font-display); font-size: 40px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
 @utility text-h1 { font-size: 28px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
 @utility text-h2 { font-size: 22px; font-weight: 500; line-height: 1.25; }
 @utility text-h3 { font-size: 18px; font-weight: 500; line-height: 1.3; }
 @utility text-body { font-size: 16px; font-weight: 400; line-height: 1.5; }
 @utility text-small { font-size: 14px; font-weight: 400; line-height: 1.5; }
 @utility text-caption { font-size: 12px; font-weight: 500; line-height: 1.4; }
-/* Fraunces editorial accent — seeker headlines only, never < ~28px (§7.1). */
 @utility font-editorial { font-family: var(--font-display); }
 
-/* Focus ring (§5.6): 2px ember-500 ring at 2px offset, NEVER removed. */
-@utility focus-ember {
-  outline: none;
-}
+/* Focus ring (§17): 2px ember ring, never removed. */
+@utility focus-ember { outline: none; }
 .focus-ember:focus-visible,
 a:focus-visible, button:focus-visible,
 input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
@@ -130,8 +169,11 @@ input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
   border-radius: var(--r-sm);
 }
 
-/* Reduced-motion global damp (§9): kill non-essential transitions/animation for
-   users who ask for it; the aperture already renders at-rest (see §6 block). */
+/* Ember glow helper — a soft volumetric halo behind Ember objects (§4). */
+@utility glow-ember {
+  box-shadow: 0 0 0 rgba(232,90,44,0), 0 8px 40px rgba(232,90,44,calc(var(--glow-strength) * 1.1));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -142,31 +184,13 @@ input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
 }
 
 /* ============================================================================
-   Aperture Bloom motion system (Design Blueprint §6.5 / §9).
-   ~1.2s total, all on --ease-settle, nothing bouncy, then FULLY STILL.
-   At-rest CSS = the resolved state, so prefers-reduced-motion users (who get no
-   animation) see identical information with zero theater.
+   Aperture Bloom motion (§5 / §9). Resolves, then holds perfectly still.
    ============================================================================ */
-@keyframes ab-open {
-  from { transform: scale(0.2) rotate(-12deg); }
-  to   { transform: scale(1) rotate(0deg); }
-}
-@keyframes ab-petal-in {
-  from { opacity: 0; }
-  to   { opacity: 0.7; }
-}
-@keyframes ab-ring-sweep {
-  from { stroke-dashoffset: 100; }
-  to   { stroke-dashoffset: var(--ab-dash-rest); }
-}
-@keyframes ab-number-focus {
-  from { filter: blur(16px); opacity: 0; transform: scale(0.9); }
-  to   { filter: blur(0);    opacity: 1; transform: scale(1); }
-}
-@keyframes ab-pulse {
-  from { transform: scale(1);   opacity: 0.35; }
-  to   { transform: scale(1.35); opacity: 0; }
-}
+@keyframes ab-open { from { transform: scale(0.2) rotate(-12deg); } to { transform: scale(1) rotate(0deg); } }
+@keyframes ab-petal-in { from { opacity: 0; } to { opacity: 0.7; } }
+@keyframes ab-ring-sweep { from { stroke-dashoffset: 100; } to { stroke-dashoffset: var(--ab-dash-rest); } }
+@keyframes ab-number-focus { from { filter: blur(16px); opacity: 0; transform: scale(0.9); } to { filter: blur(0); opacity: 1; transform: scale(1); } }
+@keyframes ab-pulse { from { transform: scale(1); opacity: 0.35; } to { transform: scale(1.35); opacity: 0; } }
 
 @media (prefers-reduced-motion: no-preference) {
   .ab-petals { transform-box: fill-box; transform-origin: center; animation: ab-open 0.72s var(--ease-settle) both; }
@@ -174,21 +198,76 @@ input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
   .ab-ring   { animation: ab-ring-sweep 0.8s var(--ease-settle) 0.1s both; }
   .ab-number { transform-box: fill-box; transform-origin: center; animation: ab-number-focus 0.5s var(--ease-settle) 0.62s both; }
   .ab-pulse  { transform-box: fill-box; transform-origin: center; animation: ab-pulse 0.6s var(--ease-settle) 1s both; }
+  /* Living bloom: breathing at rest (opt-in via .is-alive). */
+  .ab-alive .ab-breathe { transform-box: fill-box; transform-origin: center; animation: breathe 7s ease-in-out infinite; }
 }
-/* Reduced motion: pulse ring never shown; everything else is already at-rest. */
-@media (prefers-reduced-motion: reduce) {
-  .ab-pulse { display: none; }
+@media (prefers-reduced-motion: reduce) { .ab-pulse { display: none; } }
+
+/* ============================================================================
+   Light, grain & glow — the "heavenly" texture (§4).
+   ============================================================================ */
+/* Film grain over the whole canvas — felt, not seen. Sits above bg, below content. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 
-/* Custom scrollbars (re-skinned to the token spine). */
+/* Cursor-light: a soft pool of Ember warmth that follows the pointer (§8).
+   Blended so it lifts light WITHOUT touching text sharpness. */
+#cursor-light {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    340px circle at var(--mx) var(--my),
+    rgba(232,90,44,calc(var(--glow-strength) * 0.9)),
+    rgba(232,90,44,calc(var(--glow-strength) * 0.35)) 30%,
+    transparent 62%
+  );
+  mix-blend-mode: soft-light;
+  transition: background 60ms linear;
+}
+[data-mode="dark"] #cursor-light { mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { #cursor-light { display: none; } }
+
+/* Content sits above the atmosphere layers. */
+#root { position: relative; z-index: 2; }
+
+/* Custom scrollbars. */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Body global styles — light warm canvas per the active theme. */
+html { scroll-behavior: smooth; }
+
 body {
   font-family: var(--font-sans);
   background: var(--canvas);
   color: var(--ink);
+  transition: background var(--dur-base) var(--ease-settle), color var(--dur-base) var(--ease-settle);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+/* Ember text selection — the one warm accent, everywhere. */
+::selection { background: var(--ember-500); color: #fff; }
+
+/* Smooth hover-lift for interactive cards (slick, never jumpy). */
+@utility lift {
+  transition: transform var(--dur-base) var(--ease-settle), box-shadow var(--dur-base) var(--ease-settle), border-color var(--dur-base) var(--ease-settle);
+}
+.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* Page-enter — each screen's main content resolves in gently on route change. */
+.page-enter { animation: page-in var(--dur-slow) var(--ease-focus) both; }
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
