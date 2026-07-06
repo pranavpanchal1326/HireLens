@@ -31,7 +31,12 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS allow-list. Comma-separated in the env, parsed into a list here.
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
     # Root logging level: DEBUG / INFO / WARNING / ERROR / CRITICAL.
     LOG_LEVEL: str = "INFO"

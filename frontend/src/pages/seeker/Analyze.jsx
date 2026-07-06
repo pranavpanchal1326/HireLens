@@ -107,6 +107,12 @@ export default function Analyze() {
               }
             />
           )}
+          {error && !parsing && !resume && (
+            <div className="mt-2 text-caption text-gap-text bg-gap-fill border border-gap-500/40 rounded-lg p-2.5 flex items-start gap-2">
+              <span className="font-semibold text-small shrink-0">Upload failed:</span>
+              <span>{error.message}</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setPasteMode((p) => !p)}
