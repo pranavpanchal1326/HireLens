@@ -41,6 +41,11 @@ class EmbeddingScorer:
         # silently break in production.
         self._model = SentenceTransformer(model_name, device="cpu")
         self._model.max_seq_length = _MAX_SEQ_LENGTH
+        # Per-process cache of text -> embedding. The RAG skill matcher re-encodes
+        # the SAME skill string many times (once per resume-skill × JD-skill pair),
+        # which turned a single scoring request into hundreds of model.encode calls
+        # and caused pipeline timeouts. Caching makes each unique string encode once.
+        self._embed_cache: dict[str, np.ndarray] = {}
         logger.info("Loaded embedding model %s on CPU", model_name)
 
     def embed(self, text: str) -> np.ndarray:
@@ -48,10 +53,17 @@ class EmbeddingScorer:
 
         Text longer than the model's 256-token limit is truncated by the model
         (truncation, not failure) — see module note on this limitation.
+
+        Results are memoized per text so repeated encodes of the same skill string
+        (common in the RAG matcher's nested loop) don't re-run the transformer.
         """
+        cached = self._embed_cache.get(text)
+        if cached is not None:
+            return cached
         vector: np.ndarray = self._model.encode(
             text, convert_to_numpy=True, normalize_embeddings=False
         )
+        self._embed_cache[text] = vector
         return vector
 
     def embed_batch(self, texts: list[str]) -> np.ndarray:

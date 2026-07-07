@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.scoring import GapItem, SkillMatch
 from app.services.rag.faiss_index_builder import FAISSSkillIndexQuerier
@@ -48,6 +48,14 @@ class SkillMatchResult(BaseModel):
     match_type: Literal["exact", "semantic", "none"]
     similarity_score: float = Field(ge=0.0, le=1.0)
     matched_via_concept_uri: str | None = None
+
+    @field_validator("similarity_score", mode="before")
+    @classmethod
+    def clamp_similarity_score(cls, v: object) -> float | object:
+        """Clamp similarity score to [0.0, 1.0] to handle floating-point precision issues."""
+        if isinstance(v, (int, float)):
+            return max(0.0, min(1.0, float(v)))
+        return v
 
 
 # Action-phrased gap templates — NEVER deficiency-framed (Design Blueprint §12).

@@ -142,6 +142,12 @@ class FAISSSkillIndexQuerier:
         self._index = index
         self._metadata = metadata
         self._scorer = embedding_scorer
+        # Cache of (query_text, top_k) -> results. The skill matcher issues the
+        # SAME query (each resume skill, each JD skill) O(resume × JD) times per
+        # scoring request; the index is immutable per process, so re-running the
+        # FAISS search is pure waste. Memoizing turns O(N×M) searches into O(N+M)
+        # and keeps a large resume under the /score timeout.
+        self._query_cache: dict[tuple[str, int], list[tuple[SkillVectorEntry, float]]] = {}
 
     def query_raw(
         self, query_text: str, top_k: int = 5
@@ -151,7 +157,14 @@ class FAISSSkillIndexQuerier:
         The query is L2-normalized identically to the index vectors, so the
         IndexFlatIP inner-product scores are cosine similarities. Pure retrieval —
         no thresholding or match decisions (that is Part 3.3).
+
+        Results are memoized per (query_text, top_k): the index is fixed for the
+        process lifetime, so identical queries always yield identical results.
         """
+        cache_key = (query_text, top_k)
+        cached = self._query_cache.get(cache_key)
+        if cached is not None:
+            return cached
         if self._index.ntotal == 0:
             return []
         query_vec = _l2_normalize(np.asarray(self._scorer.embed(query_text))[None, :])
@@ -163,4 +176,5 @@ class FAISSSkillIndexQuerier:
             if idx < 0:  # FAISS pads with -1 when fewer than k results exist.
                 continue
             results.append((self._metadata[int(idx)], float(score)))
+        self._query_cache[cache_key] = results
         return results

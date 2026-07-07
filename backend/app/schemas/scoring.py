@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class FeatureVector(BaseModel):
@@ -61,6 +61,14 @@ class SkillMatch(BaseModel):
     jd_skill: str
     match_type: Literal["exact", "semantic"]
     similarity_score: float = Field(ge=0.0, le=1.0)
+
+    @field_validator("similarity_score", mode="before")
+    @classmethod
+    def clamp_similarity_score(cls, v: object) -> float | object:
+        """Clamp similarity score to [0.0, 1.0] to handle floating-point precision issues."""
+        if isinstance(v, (int, float)):
+            return max(0.0, min(1.0, float(v)))
+        return v
 
 
 class GapItem(BaseModel):
