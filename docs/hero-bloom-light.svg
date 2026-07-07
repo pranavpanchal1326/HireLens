@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380" role="img" aria-label="HireLens — the aperture bloom, a fit score resolving into focus">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E85A2C" stop-opacity="0.14"/>
+      <stop offset="60%" stop-color="#E85A2C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="120" y="10" width="360" height="360" fill="url(#glow)"/>
+  
+  <g fill="none" stroke="#0A0A0B" stroke-opacity="0.10">
+    <circle cx="300" cy="190" r="176"/>
+    <circle cx="300" cy="190" r="140" stroke-dasharray="2 7"/>
+    <circle cx="300" cy="190" r="104"/>
+  </g>
+  <g stroke="#0A0A0B" stroke-opacity="0.14" stroke-width="1.2"><line x1="476.0" y1="190.0" x2="462.0" y2="190.0"/><line x1="474.5" y1="213.0" x2="467.6" y2="212.1"/><line x1="470.0" y1="235.6" x2="463.2" y2="233.7"/><line x1="462.6" y1="257.4" x2="456.1" y2="254.7"/><line x1="452.4" y1="278.0" x2="440.3" y2="271.0"/><line x1="439.6" y1="297.1" x2="434.1" y2="292.9"/><line x1="424.5" y1="314.5" x2="419.5" y2="309.5"/><line x1="407.1" y1="329.6" x2="402.9" y2="324.1"/><line x1="388.0" y1="342.4" x2="381.0" y2="330.3"/><line x1="367.4" y1="352.6" x2="364.7" y2="346.1"/><line x1="345.6" y1="360.0" x2="343.7" y2="353.2"/><line x1="323.0" y1="364.5" x2="322.1" y2="357.6"/><line x1="300.0" y1="366.0" x2="300.0" y2="352.0"/><line x1="277.0" y1="364.5" x2="277.9" y2="357.6"/><line x1="254.4" y1="360.0" x2="256.3" y2="353.2"/><line x1="232.6" y1="352.6" x2="235.3" y2="346.1"/><line x1="212.0" y1="342.4" x2="219.0" y2="330.3"/><line x1="192.9" y1="329.6" x2="197.1" y2="324.1"/><line x1="175.5" y1="314.5" x2="180.5" y2="309.5"/><line x1="160.4" y1="297.1" x2="165.9" y2="292.9"/><line x1="147.6" y1="278.0" x2="159.7" y2="271.0"/><line x1="137.4" y1="257.4" x2="143.9" y2="254.7"/><line x1="130.0" y1="235.6" x2="136.8" y2="233.7"/><line x1="125.5" y1="213.0" x2="132.4" y2="212.1"/><line x1="124.0" y1="190.0" x2="138.0" y2="190.0"/><line x1="125.5" y1="167.0" x2="132.4" y2="167.9"/><line x1="130.0" y1="144.4" x2="136.8" y2="146.3"/><line x1="137.4" y1="122.6" x2="143.9" y2="125.3"/><line x1="147.6" y1="102.0" x2="159.7" y2="109.0"/><line x1="160.4" y1="82.9" x2="165.9" y2="87.1"/><line x1="175.5" y1="65.5" x2="180.5" y2="70.5"/><line x1="192.9" y1="50.4" x2="197.1" y2="55.9"/><line x1="212.0" y1="37.6" x2="219.0" y2="49.7"/><line x1="232.6" y1="27.4" x2="235.3" y2="33.9"/><line x1="254.4" y1="20.0" x2="256.3" y2="26.8"/><line x1="277.0" y1="15.5" x2="277.9" y2="22.4"/><line x1="300.0" y1="14.0" x2="300.0" y2="28.0"/><line x1="323.0" y1="15.5" x2="322.1" y2="22.4"/><line x1="345.6" y1="20.0" x2="343.7" y2="26.8"/><line x1="367.4" y1="27.4" x2="364.7" y2="33.9"/><line x1="388.0" y1="37.6" x2="381.0" y2="49.7"/><line x1="407.1" y1="50.4" x2="402.9" y2="55.9"/><line x1="424.5" y1="65.5" x2="419.5" y2="70.5"/><line x1="439.6" y1="82.9" x2="434.1" y2="87.1"/><line x1="452.4" y1="102.0" x2="440.3" y2="109.0"/><line x1="462.6" y1="122.6" x2="456.1" y2="125.3"/><line x1="470.0" y1="144.4" x2="463.2" y2="146.3"/><line x1="474.5" y1="167.0" x2="467.6" y2="167.9"/></g>
+  <g><path d="M300 190 Q 268.128 131.216 300 83.12 Q 331.872 131.216 300 190 Z" fill="#E85A2C" fill-opacity="0.72" transform="rotate(0 300 190)"/><path d="M300 190 Q 267.36 128.39999999999998 300 78 Q 332.64 128.39999999999998 300 190 Z" fill="#F2896A" fill-opacity="0.72" transform="rotate(72 300 190)"/><path d="M300 190 Q 266.976 126.99199999999999 300 75.44 Q 333.024 126.99199999999999 300 190 Z" fill="#F2896A" fill-opacity="0.72" transform="rotate(144 300 190)"/><path d="M300 190 Q 269.088 134.736 300 89.52 Q 330.912 134.736 300 190 Z" fill="#E85A2C" fill-opacity="0.72" transform="rotate(216 300 190)"/><path d="M300 190 Q 269.472 136.14399999999998 300 92.07999999999998 Q 330.528 136.14399999999998 300 190 Z" fill="#F2896A" fill-opacity="0.72" transform="rotate(288 300 190)"/></g>
+  <circle cx="300" cy="190" r="128" fill="none" stroke="#0A0A0B" stroke-opacity="0.25" stroke-width="8"/>
+  <circle cx="300" cy="190" r="128" fill="none" stroke="#E85A2C" stroke-width="8" stroke-linecap="round"
+    pathLength="100" stroke-dasharray="86 100" transform="rotate(-90 300 190)"/>
+  <circle cx="300" cy="190" r="44" fill="#FFFFFF" stroke="#E7E7EA" stroke-width="2"/>
+  <text x="300" y="191" text-anchor="middle" dominant-baseline="central"
+    font-family="Menlo, Consolas, monospace" font-weight="700" font-size="46" fill="#C7431A"
+    style="font-variant-numeric:tabular-nums">86</text>
+</svg>
