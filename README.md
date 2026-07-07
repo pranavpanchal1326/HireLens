@@ -10,8 +10,15 @@
 **Resume intelligence, brought into focus.**
 
 *A two-sided AI platform that scores, ranks, and — above all — **explains** résumé-to-job fit.*
+</div>
+<br>
+
+[![Watch the HireLens demo](https://img.youtube.com/vi/XxRLrULnZ6Q/maxresdefault.jpg)](https://youtu.be/XxRLrULnZ6Q)
+
+**▶ [Watch the 2-minute demo](https://youtu.be/XxRLrULnZ6Q)**
 
 </div>
+
 
 ---
 
